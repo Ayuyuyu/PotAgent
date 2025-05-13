@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"potAgent/logger"
 	"runtime"
 	"strings"
 
@@ -33,11 +34,9 @@ func FindConfigFile(confDir string) ([]string, error) {
 			confDir += "/"
 		}
 	}
-	//logger.Log.Info(confDir)
+	//confDir += "/"
+	logger.Log.Info("正在读取目录", confDir)
 	err := filepath.Walk(confDir, func(path string, info os.FileInfo, err error) error {
-		if d, _ := filepath.Split(path); d != confDir {
-			return nil
-		}
 		if strings.HasSuffix(path, ".yaml") {
 			files = append(files, path)
 		}

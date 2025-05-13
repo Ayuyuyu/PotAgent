@@ -53,7 +53,7 @@ func httpHandle(ctx context.Context, service *services.Service) {
 		serviceOptions = service.ServiceOptions.(httpConfig)
 		baseOptions    = service.BaseOptions
 	)
-	logger.Log.Infoln(serviceOptions, baseOptions)
+	logger.Log.Debugln(serviceOptions, baseOptions)
 	// 监听
 	address := fmt.Sprintf("%v:%v", baseOptions.Host, baseOptions.Port)
 	network := "tcp4"
