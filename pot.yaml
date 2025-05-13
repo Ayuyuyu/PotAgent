@@ -1,4 +1,3 @@
-services_application: ["ssh","telnet","vnc","http","http-zhihu"]
 services_dir: "./services_conf"
 
 # 事件数据的输出推送

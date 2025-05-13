@@ -34,7 +34,9 @@ func InitServicesRun(confPath string) error {
 	} else {
 		logger.Log.Println("读取服务目录成功", yamlFiles)
 	}
-
+	if len(yamlFiles) == 0 {
+		logger.Log.Fatalln(gOption.ServicesDir, "没有找到服务")
+	}
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	//事件记录初始化
@@ -55,7 +57,6 @@ func InitServicesRun(confPath string) error {
 		funcServiceHandle, err := services.Get(baseOptions.Protocol)
 		if err != nil {
 			logger.Log.Warn(err)
-			//services.Register(baseOptions.Application, funcServiceHandle)
 			return err
 		}
 		if !baseOptions.Enable {
@@ -70,8 +71,7 @@ func InitServicesRun(confPath string) error {
 		if err != nil {
 			return err
 		}
-		logger.Log.Info(serviceApp)
-		//serviceApp.WorkerHandle(&serviceApp)
+		//logger.Log.Info(serviceApp)
 		Start(ctx, &serviceApp)
 	}
 
