@@ -1,0 +1,12 @@
+protocol: "vnc" #固定字段
+application: "vnc"
+enable: true
+# 监听地址
+host: "0.0.0.0"
+# 监听端口
+port: 5901
+
+# 可选字段
+version: "VNC"
+# VNC连接后显示的图像
+img_path: "./services_conf/assets/vnc/vnc.png"

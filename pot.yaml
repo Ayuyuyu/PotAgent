@@ -1,0 +1,16 @@
+services_application: ["ssh","telnet","vnc","http","http-zhihu"]
+services_dir: "./services_conf"
+
+# 事件数据的输出推送
+outputs:
+  # 写入到本地的文件
+  file:
+    enable: true
+    # 事件的文件名或绝对路径
+    file_path: "event.log"
+  # 推送到kafka
+  kafka:
+    enable: false
+    host: "127.0.0.1"
+    port: 9092
+    topic: "test"

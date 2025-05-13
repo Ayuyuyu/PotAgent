@@ -1,0 +1,43 @@
+protocol: "ssh" #固定字段
+application: "ssh"
+enable: false
+# 监听地址
+host: "0.0.0.0"
+# 监听端口
+port: 2222
+
+# ssh config
+motd: |
+  Welcome to Ubuntu 22.04.03 LTS (Jammy Jellyfish)
+
+  * Documentation:  https://help.ubuntu.com
+  * Management:     https://landscape.canonical.com
+  * Support:        https://ubuntu.com/advantage
+
+  * Super-optimized for performance and security.
+  * Enjoy your Ubuntu experience!
+
+  Last login: Sun Mar 19 19:40:44 2025 from 172.16.84.1
+
+max_auth_tries: 3
+accounts: 
+  - username: "root"
+    password: "123456"
+  - username: "root"
+    password: "root"
+    
+simulator:
+  pwd: /home/user
+  ls:  Documents  Downloads  Music  Pictures  Videos
+  ps -ef: |
+    UID        PID  PPID  C STIME TTY          TIME CMD
+    user      1234     1  0 10:00 ?        00:00:00 /usr/lib/systemd/systemd
+    user      5678  1234  0 10:01 ?        00:00:00 /usr/bin/gnome-shell
+    user      9101  5678  0 10:02 ?        00:00:00 /usr/bin/nautilus
+    user      1121  9101  0 10:03 ?        00:00:00 /usr/bin/gnome-terminal
+  ps -aux: |
+    USER         PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+    user        1234  0.0  0.1  123456  12345 ?        Ssl  10:00   0:00 /usr/lib/systemd/systemd
+    user        5678  0.1  0.2  234567  23456 ?        Ssl  10:01   0:00 /usr/bin/gnome-shell
+    user        9101  0.0  0.1  345678  34567 ?        S    10:02   0:00 /usr/bin/nautilus
+    user        1121  0.0  0.1  456789  45678 pts/0    S+   10:03   0:00 /usr/bin/gnome-terminal

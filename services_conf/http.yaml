@@ -1,0 +1,41 @@
+protocol: "http"
+application: "http-phpmyadmin"
+enable: true
+# 监听地址
+host: "0.0.0.0"
+# 监听端口
+port: 8080
+
+assets_dir: "./services_conf/assets/http/PhpMyAdmin_4.8.1"
+index: "home.html"
+
+request_simulator:
+  - uri: /download/xx.exe
+    method: GET
+    response:
+      type: file   
+      #value: "./services_conf/assets/http/xx.exe"
+      value: ""  #为空随机生成
+
+  - uri: /test1
+    method: GET
+    response:
+      type: json   # 普通字符串返回
+      value: |
+        {"code": 0, "msg": "success", "data": "Hello World! test1"}
+
+  - uri: /test2
+    method: GET
+    response:
+      type: string   
+      value: |
+        Hello World! test2
+  
+  - uri: /test3
+    method: POST
+    response:
+      type: json   
+      value: |
+        {"code": 0, "msg": "success", "data": "Hello World! test3"}
+
+  

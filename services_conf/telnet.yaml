@@ -1,0 +1,46 @@
+protocol: "telnet" #固定字段
+application: "telnet"
+enable: false
+# 监听地址
+host: "0.0.0.0"
+# 监听端口
+port: 23
+
+# telnet config
+motd: |
+  ********************************************************************************
+  *             Copyright(C) 2008-2015 Huawei Technologies Co., Ltd.             *
+  *                             All rights reserved                              *
+  *                  Without the owner's prior written consent,                  *
+  *           no decompiling or reverse-engineering shall be allowed.            *
+  * Notice:                                                                      *
+  *                   This is a private communication system.                    *
+  *             Unauthorized access or use may lead to prosecution.              *
+  ********************************************************************************
+  
+  Warning: Telnet is not a secure protocol, and it is recommended to use STelnet. 
+  
+  Login authentication
+ 
+prompt: "$ "
+accounts: 
+  - username: "root"
+    password: "123456"
+  - username: "root"
+    password: "root"
+    
+simulator:
+  pwd: /home/user
+  ls:  Documents  Downloads  Music  Pictures  Videos
+  ps -ef: |
+    UID        PID  PPID  C STIME TTY          TIME CMD
+    user      1234     1  0 10:00 ?        00:00:00 /usr/lib/systemd/systemd
+    user      5678  1234  0 10:01 ?        00:00:00 /usr/bin/gnome-shell
+    user      9101  5678  0 10:02 ?        00:00:00 /usr/bin/nautilus
+    user      1121  9101  0 10:03 ?        00:00:00 /usr/bin/gnome-terminal
+  ps -aux: |
+    USER         PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+    user        1234  0.0  0.1  123456  12345 ?        Ssl  10:00   0:00 /usr/lib/systemd/systemd
+    user        5678  0.1  0.2  234567  23456 ?        Ssl  10:01   0:00 /usr/bin/gnome-shell
+    user        9101  0.0  0.1  345678  34567 ?        S    10:02   0:00 /usr/bin/nautilus
+    user        1121  0.0  0.1  456789  45678 pts/0    S+   10:03   0:00 /usr/bin/gnome-terminal
