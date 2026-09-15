@@ -22,6 +22,10 @@ func InitServicesRun(confPath string) error {
 	}
 	gOption := global.Options{}
 	config.ReadConfigFile(vip, &gOption)
+	// 按需解压服务资源包 (services_dir/assets.zip -> services_dir/assets)，仅当资源目录缺失时
+	if err := common.EnsureAssets(gOption.ServicesDir); err != nil {
+		logger.Log.Errorf("解压资源包失败: %v", err)
+	}
 	//res, err := fileutil.ReadFileToString(common.InsertRootDirIfNotAbsolutePath(gOption.ServicesDir))
 
 	//logger.Log.Info(gOption.ServicesDir, r)
