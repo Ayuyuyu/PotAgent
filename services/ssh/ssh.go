@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"time"
 
 	"net"
 	"potAgent/common"
@@ -14,7 +15,6 @@ import (
 	"potAgent/services"
 	"potAgent/services/decoder"
 	"strings"
-	"time"
 
 	"github.com/rs/xid"
 	"golang.org/x/crypto/ssh"
@@ -124,24 +124,12 @@ func simulatorConfig(cfg *sshConfig, sessionID xid.ID, sdata sshData) *ssh.Serve
 			if err != nil {
 				logger.Log.Error(err)
 			}
-			e := event.Event{
-				Timestamp:     time.Now().Format(time.DateTime),
-				EventCategory: serviceName,
-				EventType:     "ssh-publickey-authentication",
-				SrcIP:         srcAddr.IP,
-				DstIP:         dstAddr.IP,
-				IPProtocol:    "tcp",
-				SrcPort:       srcAddr.Port,
-				DstPort:       dstAddr.Port,
-				Details: map[string]interface{}{
-					"protocol":           serviceName,
-					"ssh.publickey-type": key.Type(),
-					"ssh.publickey":      hex.EncodeToString(key.Marshal()),
-					"ssh.session-id":     sessionID.String(),
-				},
-			}
-
-			event.EventPush(&e)
+			event.EventPush(event.NewEvent(serviceName, "ssh-publickey-authentication", srcAddr, dstAddr, map[string]interface{}{
+				"protocol":           serviceName,
+				"ssh.publickey-type": key.Type(),
+				"ssh.publickey":      hex.EncodeToString(key.Marshal()),
+				"ssh.session-id":     sessionID.String(),
+			}))
 
 			return nil, errors.New("unknown key")
 		},
@@ -154,23 +142,12 @@ func simulatorConfig(cfg *sshConfig, sessionID xid.ID, sdata sshData) *ssh.Serve
 			if err != nil {
 				logger.Log.Error(err)
 			}
-			e := event.Event{
-				Timestamp:     time.Now().Format(time.DateTime),
-				EventCategory: serviceName,
-				EventType:     "ssh-password-authentication",
-				SrcIP:         srcAddr.IP,
-				DstIP:         dstAddr.IP,
-				IPProtocol:    "tcp",
-				SrcPort:       srcAddr.Port,
-				DstPort:       dstAddr.Port,
-				Details: map[string]interface{}{
-					"protocol":       serviceName,
-					"ssh.username":   conn.User(),
-					"ssh.password":   string(password),
-					"ssh.session-id": sessionID.String(),
-				},
-			}
-			event.EventPush(&e)
+			event.EventPush(event.NewEvent(serviceName, "ssh-password-authentication", srcAddr, dstAddr, map[string]interface{}{
+				"protocol":       serviceName,
+				"ssh.username":   conn.User(),
+				"ssh.password":   string(password),
+				"ssh.session-id": sessionID.String(),
+			}))
 			for _, account := range cfg.Accounts {
 				if account.Username == "*" {
 					// 如果配置了通配符的用户名，就什么账户都能登录
@@ -207,22 +184,11 @@ func handleServiceConn(conn net.Conn, config *ssh.ServerConfig, sessionID xid.ID
 		// server closed connection
 		return
 	} else if err != nil {
-		e := event.Event{
-			Timestamp:     time.Now().Format(time.DateTime),
-			EventCategory: serviceName,
-			EventType:     "ssh-connect-failed",
-			SrcIP:         srcAddr.IP,
-			DstIP:         dstAddr.IP,
-			IPProtocol:    "tcp",
-			SrcPort:       srcAddr.Port,
-			DstPort:       dstAddr.Port,
-			Details: map[string]interface{}{
-				"protocol":       serviceName,
-				"error":          err.Error(),
-				"ssh.session-id": sessionID.String(),
-			},
-		}
-		event.EventPush(&e)
+		event.EventPush(event.NewEvent(serviceName, "ssh-connect-failed", srcAddr, dstAddr, map[string]interface{}{
+			"protocol":       serviceName,
+			"error":          err.Error(),
+			"ssh.session-id": sessionID.String(),
+		}))
 	}
 
 	go ssh.DiscardRequests(reqs)
@@ -234,74 +200,42 @@ func handleServiceConn(conn net.Conn, config *ssh.ServerConfig, sessionID xid.ID
 			// 此处是最常用的shell，可以进行下一步
 		case "forwarded-tcpip":
 			decoder := PayloadDecoder(newChannel.ExtraData())
-			e := event.Event{
-				Timestamp:     time.Now().Format(time.DateTime),
-				EventCategory: serviceName,
-				EventType:     "ssh-channel",
-				SrcIP:         srcAddr.IP,
-				DstIP:         dstAddr.IP,
-				IPProtocol:    "tcp",
-				SrcPort:       srcAddr.Port,
-				DstPort:       dstAddr.Port,
-				Details: map[string]interface{}{
-					"protocol":         serviceName,
-					"ssh.session-id":   sessionID.String(),
-					"ssh.channel-type": newChannel.ChannelType(),
-					"ssh.forwarded-tcpip.address-that-was-connected": decoder.String(),
-					"ssh.forwarded-tcpip.port-that-was-connected":    fmt.Sprintf("%d", decoder.Uint32()),
-					"ssh.forwarded-tcpip.originator-host":            decoder.String(),
-					"ssh.forwarded-tcpip.originator-port":            fmt.Sprintf("%d", decoder.Uint32()),
-					"payload":                                        newChannel.ExtraData(),
-				},
-			}
-			event.EventPush(&e)
+			event.EventPush(event.NewEvent(serviceName, "ssh-channel", srcAddr, dstAddr, map[string]interface{}{
+				"protocol":         serviceName,
+				"ssh.session-id":   sessionID.String(),
+				"ssh.channel-type": newChannel.ChannelType(),
+				"ssh.forwarded-tcpip.address-that-was-connected": decoder.String(),
+				"ssh.forwarded-tcpip.port-that-was-connected":    fmt.Sprintf("%d", decoder.Uint32()),
+				"ssh.forwarded-tcpip.originator-host":            decoder.String(),
+				"ssh.forwarded-tcpip.originator-port":            fmt.Sprintf("%d", decoder.Uint32()),
+				"payload":                                        newChannel.ExtraData(),
+			}))
 
 			newChannel.Reject(ssh.UnknownChannelType, "not allowed")
 			continue
 		case "direct-tcpip":
 			decoder := PayloadDecoder(newChannel.ExtraData())
 
-			e := event.Event{
-				Timestamp:     time.Now().Format(time.DateTime),
-				EventCategory: serviceName,
-				EventType:     "ssh-channel",
-				SrcIP:         srcAddr.IP,
-				DstIP:         dstAddr.IP,
-				IPProtocol:    "tcp",
-				SrcPort:       srcAddr.Port,
-				DstPort:       dstAddr.Port,
-				Details: map[string]interface{}{
-					"protocol":                         serviceName,
-					"ssh.session-id":                   sessionID.String(),
-					"ssh.channel-type":                 newChannel.ChannelType(),
-					"ssh.direct-tcpip.host-to-connect": decoder.String(),
-					"ssh.direct-tcpip.port-to-connect": fmt.Sprintf("%d", decoder.Uint32()),
-					"ssh.direct-tcpip.originator-host": decoder.String(),
-					"ssh.direct-tcpip.originator-port": fmt.Sprintf("%d", decoder.Uint32()),
-					"payload":                          newChannel.ExtraData(),
-				},
-			}
-			event.EventPush(&e)
+			event.EventPush(event.NewEvent(serviceName, "ssh-channel", srcAddr, dstAddr, map[string]interface{}{
+				"protocol":                         serviceName,
+				"ssh.session-id":                   sessionID.String(),
+				"ssh.channel-type":                 newChannel.ChannelType(),
+				"ssh.direct-tcpip.host-to-connect": decoder.String(),
+				"ssh.direct-tcpip.port-to-connect": fmt.Sprintf("%d", decoder.Uint32()),
+				"ssh.direct-tcpip.originator-host": decoder.String(),
+				"ssh.direct-tcpip.originator-port": fmt.Sprintf("%d", decoder.Uint32()),
+				"payload":                          newChannel.ExtraData(),
+			}))
 
 			newChannel.Reject(ssh.UnknownChannelType, "not allowed")
 			continue
 		default:
-			e := event.Event{
-				Timestamp:     time.Now().Format(time.DateTime),
-				EventCategory: serviceName,
-				EventType:     "ssh-channel",
-				SrcIP:         srcAddr.IP,
-				DstIP:         dstAddr.IP,
-				IPProtocol:    "tcp",
-				SrcPort:       srcAddr.Port,
-				DstPort:       dstAddr.Port,
-				Details: map[string]interface{}{
-					"protocol":         serviceName,
-					"ssh.sessionid":    sessionID.String(),
-					"ssh.channel-type": newChannel.ChannelType(),
-					"payload":          newChannel.ExtraData(),
-				}}
-			event.EventPush(&e)
+			event.EventPush(event.NewEvent(serviceName, "ssh-channel", srcAddr, dstAddr, map[string]interface{}{
+				"protocol":         serviceName,
+				"ssh.sessionid":    sessionID.String(),
+				"ssh.channel-type": newChannel.ChannelType(),
+				"payload":          newChannel.ExtraData(),
+			}))
 
 			newChannel.Reject(ssh.UnknownChannelType, "unknown channel type")
 			logger.Log.Debugf("Unknown channel type: %s\n", newChannel.ChannelType())
@@ -322,21 +256,12 @@ func handleServiceConn(conn net.Conn, config *ssh.ServerConfig, sessionID xid.ID
 			for req := range requests {
 				// logger.Log.Debugf("Request: %s %s %s %s\n", channel, req.Type, req.WantReply, req.Payload)
 
-				e := event.Event{
-					Timestamp:     time.Now().Format(time.DateTime),
-					EventCategory: serviceName,
-					EventType:     "ssh-request",
-					SrcIP:         srcAddr.IP,
-					DstIP:         dstAddr.IP,
-					IPProtocol:    "tcp",
-					SrcPort:       srcAddr.Port,
-					DstPort:       dstAddr.Port,
-					Details: map[string]interface{}{
-						"protocol":         serviceName,
-						"ssh.sessionid":    sessionID.String(),
-						"ssh.request-type": req.Type,
-						"payload":          req.Payload,
-					}}
+				e := event.NewEvent(serviceName, "ssh-request", srcAddr, dstAddr, map[string]interface{}{
+					"protocol":         serviceName,
+					"ssh.sessionid":    sessionID.String(),
+					"ssh.request-type": req.Type,
+					"payload":          req.Payload,
+				})
 
 				needResponse := false
 
@@ -346,7 +271,7 @@ func handleServiceConn(conn net.Conn, config *ssh.ServerConfig, sessionID xid.ID
 					needResponse = true
 				case "pty-req":
 					needResponse = true
-					event.EventPush(&e)
+					event.EventPush(e)
 				case "env":
 					needResponse = true
 					decoder := PayloadDecoder(req.Payload)
@@ -359,14 +284,14 @@ func handleServiceConn(conn net.Conn, config *ssh.ServerConfig, sessionID xid.ID
 					}
 
 					e.Details["ssh.env"] = payloads
-					event.EventPush(&e)
+					event.EventPush(e)
 				case "tcpip-forward":
 					decoder := PayloadDecoder(req.Payload)
 
 					e.Details["ssh.tcpip-forward.address-to-bind"] = decoder.String()
 					e.Details["ssh.tcpip-forward.port-to-bind"] = fmt.Sprintf("%d", decoder.Uint32())
 
-					event.EventPush(&e)
+					event.EventPush(e)
 				case "exec":
 					needResponse = true
 					decoder := PayloadDecoder(req.Payload)
@@ -383,10 +308,10 @@ func handleServiceConn(conn net.Conn, config *ssh.ServerConfig, sessionID xid.ID
 					needResponse = true
 					decoder := PayloadDecoder(req.Payload)
 					e.Details["ssh.subsystem"] = decoder.String()
-					event.EventPush(&e)
+					event.EventPush(e)
 				default:
 					logger.Log.Errorf("Unsupported request type=%s payload=%s", req.Type, string(req.Payload))
-					event.EventPush(&e)
+					event.EventPush(e)
 				}
 
 				if needResponse {
@@ -408,7 +333,8 @@ func handleServiceConn(conn net.Conn, config *ssh.ServerConfig, sessionID xid.ID
 						prompt := fmt.Sprintf("%v@%v:~$ ", username, cfg.Hostname)
 
 						term := term.NewTerminal(wrappedChannel, prompt)
-						motd := []byte("Last login: Wed Sep 14 14:11:49 2024 from 172.31.60.24\n")
+						// 模拟的登录时间：当前时间往前推一天
+						motd := []byte(fmt.Sprintf("Last login: %s from 172.31.60.24\n", time.Now().AddDate(0, 0, -1).Format("Mon Jan 2 15:04:05 2006")))
 						if len(cfg.Motd) > 0 {
 							motd = []byte(cfg.Motd)
 						}
@@ -432,23 +358,17 @@ func handleServiceConn(conn net.Conn, config *ssh.ServerConfig, sessionID xid.ID
 								continue
 							}
 
-							e := event.Event{
-								Timestamp:     time.Now().Format(time.DateTime),
-								EventCategory: serviceName,
-								EventType:     "ssh-shell",
-								SrcIP:         srcAddr.IP,
-								DstIP:         dstAddr.IP,
-								IPProtocol:    "tcp",
-								SrcPort:       srcAddr.Port,
-								DstPort:       dstAddr.Port,
-								Details: map[string]interface{}{
-									"protocol":      serviceName,
-									"ssh.sessionid": sessionID.String(),
-									"ssh.shell":     line,
-								}}
-							event.EventPush(&e)
+							event.EventPush(event.NewEvent(serviceName, "ssh-shell", srcAddr, dstAddr, map[string]interface{}{
+								"protocol":      serviceName,
+								"ssh.sessionid": sessionID.String(),
+								"ssh.shell":     line,
+							}))
 
 							if v, ok := cfg.Simulator[line]; ok {
+								// 模拟器回复保证以换行结尾（yaml 里 | 块标量已带 \n，避免重复）
+								if !strings.HasSuffix(v, "\n") {
+									v += "\n"
+								}
 								term.Write([]byte(v))
 								continue
 							}
@@ -459,20 +379,11 @@ func handleServiceConn(conn net.Conn, config *ssh.ServerConfig, sessionID xid.ID
 						channel.Write([]byte(fmt.Sprintf("-bash: %v: command not found\n", payloads[0])))
 						channel.SendRequest("exit-status", false, []byte{0, 0, 0, 0})
 
-						e := event.Event{
-							Timestamp:     time.Now().Format(time.DateTime),
-							EventCategory: serviceName,
-							SrcIP:         srcAddr.IP,
-							DstIP:         dstAddr.IP,
-							IPProtocol:    "tcp",
-							SrcPort:       srcAddr.Port,
-							DstPort:       dstAddr.Port,
-							Details: map[string]interface{}{
-								"protocol":      serviceName,
-								"ssh.sessionid": sessionID.String(),
-								"ssh.exec":      payloads,
-							}}
-						event.EventPush(&e)
+						event.EventPush(event.NewEvent(serviceName, "ssh-exec", srcAddr, dstAddr, map[string]interface{}{
+							"protocol":      serviceName,
+							"ssh.sessionid": sessionID.String(),
+							"ssh.exec":      payloads,
+						}))
 						return
 					} else {
 						return

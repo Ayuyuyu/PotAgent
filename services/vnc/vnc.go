@@ -98,21 +98,10 @@ func handleServiceConn(conn *net.Conn, service *services.Service) {
 		logger.Log.Error(err)
 	}
 
-	e := event.Event{
-		Timestamp:     time.Now().Format(time.DateTime),
-		EventCategory: serviceName,
-		EventType:     "vnc-connect",
-		SrcIP:         srcAddr.IP,
-		DstIP:         dstAddr.IP,
-		IPProtocol:    "tcp",
-		SrcPort:       srcAddr.Port,
-		DstPort:       dstAddr.Port,
-		Details: map[string]interface{}{
-			"protocol":    service.BaseOptions.Protocol,
-			"application": service.BaseOptions.Application,
-		},
-	}
-	event.EventPush(&e)
+	event.EventPush(event.NewEvent(serviceName, "vnc-connect", srcAddr, dstAddr, map[string]interface{}{
+		"protocol":    service.BaseOptions.Protocol,
+		"application": service.BaseOptions.Application,
+	}))
 
 	closec := make(chan bool)
 	go func() {

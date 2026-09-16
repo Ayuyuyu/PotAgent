@@ -1,6 +1,6 @@
 protocol: "ssh" #固定字段
 application: "ssh"
-enable: false
+enable: true
 # 监听地址
 host: "0.0.0.0"
 # 监听端口

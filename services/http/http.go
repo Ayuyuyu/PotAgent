@@ -15,7 +15,6 @@ import (
 	"potAgent/event"
 	"potAgent/logger"
 	"potAgent/services"
-	"time"
 )
 
 var (
@@ -108,26 +107,15 @@ func handleServiceConn(conn *net.Conn, service *services.Service) {
 		logger.Log.Error(err)
 	}
 
-	e := event.Event{
-		Timestamp:     time.Now().Format(time.DateTime),
-		EventCategory: serviceName,
-		EventType:     "http-access",
-		SrcIP:         srcAddr.IP,
-		DstIP:         dstAddr.IP,
-		IPProtocol:    "tcp",
-		SrcPort:       srcAddr.Port,
-		DstPort:       dstAddr.Port,
-		Details: map[string]interface{}{
-			"protocol":             service.BaseOptions.Protocol,
-			"application":          service.BaseOptions.Application,
-			"http.method":          req.Method,
-			"http.host":            req.Host,
-			"http.url":             req.URL.String(),
-			"http.request_headers": req.Header,
-			"http.request_body":    body,
-		},
-	}
-	event.EventPush(&e)
+	event.EventPush(event.NewEvent(serviceName, "http-access", srcAddr, dstAddr, map[string]interface{}{
+		"protocol":             service.BaseOptions.Protocol,
+		"application":          service.BaseOptions.Application,
+		"http.method":          req.Method,
+		"http.host":            req.Host,
+		"http.url":             req.URL.String(),
+		"http.request_headers": req.Header,
+		"http.request_body":    body,
+	}))
 	// 构造HTTP响应内容
 	resp := http.Response{
 		StatusCode: http.StatusOK,

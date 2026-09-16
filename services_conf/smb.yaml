@@ -1,0 +1,13 @@
+protocol: "smb" #固定字段
+application: "smb"
+enable: true
+# 监听地址
+host: "0.0.0.0"
+# 监听端口（常见 SMB 端口 445 / 139）
+port: 445
+
+# smb config
+# 对外声称的 SMB 版本
+version: "SMB3"
+# 响应中携带的服务器名称
+server_name: "POTAGENT"

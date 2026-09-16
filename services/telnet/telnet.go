@@ -9,8 +9,6 @@ import (
 	"potAgent/event"
 	"potAgent/logger"
 	"potAgent/services"
-	"runtime"
-	"time"
 
 	"github.com/rs/xid"
 )
@@ -81,111 +79,68 @@ func handleServiceConn(conn *net.Conn, service *services.Service) {
 		logger.Log.Error(err)
 	}
 
-	e := event.Event{
-		Timestamp:     time.Now().Format(time.DateTime),
-		EventCategory: serviceName,
-		EventType:     "telnet-connect",
-		SrcIP:         srcAddr.IP,
-		DstIP:         dstAddr.IP,
-		IPProtocol:    "tcp",
-		SrcPort:       srcAddr.Port,
-		DstPort:       dstAddr.Port,
-		Details: map[string]interface{}{
-			"protocol":          service.BaseOptions.Protocol,
-			"application":       service.BaseOptions.Application,
-			"telnet.session-id": id.String(),
-		},
-	}
-	event.EventPush(&e)
-
-	authTryCount := 0
+	event.EventPush(event.NewEvent(serviceName, "telnet-connect", srcAddr, dstAddr, map[string]interface{}{
+		"protocol":          service.BaseOptions.Protocol,
+		"application":       service.BaseOptions.Application,
+		"telnet.session-id": id.String(),
+	}))
 
 	term := NewTerminal(*conn, cfg.Prompt)
 
-AuthRetry:
-	term.SetPrompt("Username: ")
-	username, err := term.ReadLine()
-	if err == io.EOF {
-		e := event.Event{
-			Timestamp:     time.Now().Format(time.DateTime),
-			EventCategory: serviceName,
-			EventType:     "telnet-close",
-			SrcIP:         srcAddr.IP,
-			DstIP:         dstAddr.IP,
-			IPProtocol:    "tcp",
-			SrcPort:       srcAddr.Port,
-			DstPort:       dstAddr.Port,
-			Details: map[string]interface{}{
-				"protocol":          service.BaseOptions.Protocol,
-				"application":       service.BaseOptions.Application,
-				"telnet.session-id": id.String(),
-			},
-		}
-		event.EventPush(&e)
-		return
-	} else if err != nil {
-		logger.Log.Infoln(err)
-		return
+	// 推送 telnet-close 事件
+	pushCloseEvent := func() {
+		event.EventPush(event.NewEvent(serviceName, "telnet-close", srcAddr, dstAddr, map[string]interface{}{
+			"protocol":          service.BaseOptions.Protocol,
+			"application":       service.BaseOptions.Application,
+			"telnet.session-id": id.String(),
+		}))
 	}
 
-	password, err := term.ReadPassword("Password: ")
-	if err == io.EOF {
-		e := event.Event{
-			Timestamp:     time.Now().Format(time.DateTime),
-			EventCategory: serviceName,
-			EventType:     "telnet-close",
-			SrcIP:         srcAddr.IP,
-			DstIP:         dstAddr.IP,
-			IPProtocol:    "tcp",
-			SrcPort:       srcAddr.Port,
-			DstPort:       dstAddr.Port,
-			Details: map[string]interface{}{
-				"protocol":          service.BaseOptions.Protocol,
-				"application":       service.BaseOptions.Application,
-				"telnet.session-id": id.String(),
-			},
+	// 认证，最多尝试 4 次
+	authenticated := false
+	for i := 0; i < 4; i++ {
+		term.SetPrompt("Username: ")
+		username, err := term.ReadLine()
+		if err == io.EOF {
+			pushCloseEvent()
+			return
+		} else if err != nil {
+			logger.Log.Infoln(err)
+			return
 		}
-		event.EventPush(&e)
-		return
-	} else if err != nil {
-		logger.Log.Infoln(err)
-		return
-	}
 
-	e = event.Event{
-		Timestamp:     time.Now().Format(time.DateTime),
-		EventCategory: serviceName,
-		EventType:     "telnet-password-authentication",
-		SrcIP:         srcAddr.IP,
-		DstIP:         dstAddr.IP,
-		IPProtocol:    "tcp",
-		SrcPort:       srcAddr.Port,
-		DstPort:       dstAddr.Port,
-		Details: map[string]interface{}{
+		password, err := term.ReadPassword("Password: ")
+		if err == io.EOF {
+			pushCloseEvent()
+			return
+		} else if err != nil {
+			logger.Log.Infoln(err)
+			return
+		}
+
+		event.EventPush(event.NewEvent(serviceName, "telnet-password-authentication", srcAddr, dstAddr, map[string]interface{}{
 			"protocol":          service.BaseOptions.Protocol,
 			"application":       service.BaseOptions.Application,
 			"telnet.session-id": id.String(),
 			"telnet.username":   username,
 			"telnet.password":   password,
-		},
-	}
-	event.EventPush(&e)
-	for _, account := range cfg.Accounts {
-		if username == account.Username && password == account.Password {
-			goto Shell
+		}))
+		for _, account := range cfg.Accounts {
+			if username == account.Username && password == account.Password {
+				authenticated = true
+				break
+			}
 		}
+		if authenticated {
+			break
+		}
+
+		term.Write([]byte(buildTelnetResponse("login failed")))
 	}
-
-	term.Write([]byte(buildTelnetResponse("login failed")))
-	authTryCount += 1
-
-	if authTryCount >= 4 {
+	if !authenticated {
 		return
-	} else {
-		goto AuthRetry
 	}
 
-Shell:
 	// 发送欢迎消息
 	term.SetPrompt(cfg.Prompt)
 	term.Write([]byte(buildTelnetResponse(cfg.MOTD + "\n")))
@@ -197,23 +152,12 @@ Shell:
 			break
 		}
 
-		e = event.Event{
-			Timestamp:     time.Now().Format(time.DateTime),
-			EventCategory: serviceName,
-			EventType:     "telnet-command",
-			SrcIP:         srcAddr.IP,
-			DstIP:         dstAddr.IP,
-			IPProtocol:    "tcp",
-			SrcPort:       srcAddr.Port,
-			DstPort:       dstAddr.Port,
-			Details: map[string]interface{}{
-				"protocol":          service.BaseOptions.Protocol,
-				"application":       service.BaseOptions.Application,
-				"telnet.session-id": id.String(),
-				"command":           cmd,
-			},
-		}
-		event.EventPush(&e)
+		event.EventPush(event.NewEvent(serviceName, "telnet-command", srcAddr, dstAddr, map[string]interface{}{
+			"protocol":          service.BaseOptions.Protocol,
+			"application":       service.BaseOptions.Application,
+			"telnet.session-id": id.String(),
+			"command":           cmd,
+		}))
 
 		// 查询命令是否有配置对应的响应，有的话则返回
 		if v, ok := cfg.Simulator[cmd]; ok {
@@ -236,15 +180,6 @@ Shell:
 	term.Write([]byte(buildTelnetResponse("Goodbye!\r\n")))
 }
 
-func genSuffix() (suffix string) {
-	if runtime.GOOS == "windows" {
-		suffix = "\r\n"
-	} else if runtime.GOOS == "linux" {
-		suffix = "\n"
-	}
-	return
-}
-
 func buildTelnetResponse(s string) string {
-	return s + genSuffix()
+	return s + "\r\n"
 }
