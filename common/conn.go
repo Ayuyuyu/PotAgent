@@ -3,7 +3,6 @@ package common
 import (
 	"net"
 	"strconv"
-	"strings"
 
 	"golang.org/x/crypto/ssh"
 )
@@ -81,14 +80,17 @@ func GetConnDstIPAndDstPort(n *net.Conn) (a Addr, err error) {
 }
 
 func splitConnIPAndPort(s string) (a Addr, err error) {
-	splited := strings.Split(s, ":")
-	// fmt.Println("splited:", splited)
-	var port uint64
-	port, err = strconv.ParseUint(splited[1], 10, 16)
+	// 使用 net.SplitHostPort 正确处理 IPv4 与 IPv6（含 [::1]:port 括号形式）
+	host, port, err := net.SplitHostPort(s)
 	if err != nil {
 		return a, err
 	}
-	a.Port = uint16(port)
-	a.IP = splited[0]
+	var portNum uint64
+	portNum, err = strconv.ParseUint(port, 10, 16)
+	if err != nil {
+		return a, err
+	}
+	a.IP = host
+	a.Port = uint16(portNum)
 	return a, nil
 }

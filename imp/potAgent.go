@@ -113,6 +113,7 @@ func Stop(service *services.Service) error {
 
 // 事件输出初始化
 func eventInit(opt *global.Options) {
-	err := event.EventInit(opt)
-	fmt.Println(err.Error())
+	if err := event.EventInit(opt); err != nil {
+		logger.Log.Error(err)
+	}
 }

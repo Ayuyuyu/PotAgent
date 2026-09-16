@@ -7,6 +7,7 @@ package logger
 import "testing"
 
 func TestLogger(t *testing.T) {
+	InitLog("debug")
 	Log.Debug("run Debug")
 	Log.Info("run Info")
 	Log.Warn("run Warn")

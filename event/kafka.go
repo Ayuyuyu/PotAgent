@@ -63,11 +63,11 @@ func newKafkaPusher(opt *global.Options) bool {
 func produce(data string) error {
 	_, _, err := producer.SendMessage(&sarama.ProducerMessage{Topic: topic, Key: nil, Value: sarama.StringEncoder(data)})
 	if err != nil {
-		logger.Log.Panic(err)
+		logger.Log.Error("kafka produce error:", err)
+		return err
 	}
 
 	return nil
-
 }
 
 func closeKafka() {

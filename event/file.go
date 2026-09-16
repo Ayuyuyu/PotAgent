@@ -7,7 +7,7 @@ import (
 	"potAgent/logger"
 )
 
-var fileHanle *os.File
+var fileHandle *os.File
 
 /*
 *@Description: 初始化文件推送
@@ -24,7 +24,7 @@ func newFilePusher(opt *global.Options) bool {
 		logger.Log.Error("打开文件失败", err.Error())
 		return false
 	}
-	fileHanle = file
+	fileHandle = file
 	//defer file.Close()
 	go func() {
 		for e := range c {
@@ -41,10 +41,10 @@ func newFilePusher(opt *global.Options) bool {
 }
 
 func fileWrite(data string) error {
-	if fileHanle == nil {
+	if fileHandle == nil {
 		return fmt.Errorf("nil file handle")
 	}
-	_, err := fileHanle.WriteString(data + "\n")
+	_, err := fileHandle.WriteString(data + "\n")
 	if err != nil {
 		logger.Log.Error("Error writing to file:", err)
 		return err
@@ -53,7 +53,7 @@ func fileWrite(data string) error {
 }
 
 func fileClose() {
-	if fileHanle != nil {
-		fileHanle.Close()
+	if fileHandle != nil {
+		fileHandle.Close()
 	}
 }
