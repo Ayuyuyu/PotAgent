@@ -1,5 +1,5 @@
 # PotAgent 
-PotAgent 是一个轻量级的蜜罐模拟程序，但是依然能够起到不错的效果，举报服务模拟，日志记录等功能。（当然也可以增加一定的日志检测能力）
+PotAgent 是一个轻量级的蜜罐模拟程序，但是依然能够起到不错的效果，具备服务模拟，日志记录等功能。（当然也可以增加一定的日志检测能力）
 PotAgent 使用golang完成开发。PotAgent在好几年前就已经完成，现在是重写上传。上传的当前版本有参考[honeytrap](https://github.com/honeytrap/honeytrap)，也当然会更加贴合实际的使用场景进行修改。
 ## WHY低交互
 高交互蜜罐具备极好的模拟能力，但是不管是KVM模式还是docker模式创建的蜜罐系统都是极其占用系统资源的，并且其扩展性能并不好。
@@ -11,7 +11,7 @@ PotAgent 使用golang完成开发。PotAgent在好几年前就已经完成，现
 - [x] telnet
 - [x] vnc
 - [x] http
-- [ ] smb
+- [x] smb
 - [ ] dns
 - [ ] https
 - [ ] 工控系列PLC
@@ -29,7 +29,7 @@ PotAgent 使用golang完成开发。PotAgent在好几年前就已经完成，现
 直接编译使用：
 ```
 #推荐使用go 1.20以上版本
-go build -o PotAgent main.go 
+go build -o PotAgent ./cmd/potagent 
 ```
 **文件目录**  
 ```
