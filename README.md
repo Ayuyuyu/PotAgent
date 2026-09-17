@@ -12,7 +12,7 @@ PotAgent 使用golang完成开发。PotAgent在好几年前就已经完成，现
 - [x] vnc
 - [x] http
 - [x] smb
-- [ ] dns
+- [x] dns
 - [x] https
 - [ ] 工控系列PLC
 * **多服务配置启动**   

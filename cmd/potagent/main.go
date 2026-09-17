@@ -6,6 +6,7 @@ import (
 	"potAgent/imp"
 	"potAgent/logger"
 
+	_ "potAgent/services/dns"
 	_ "potAgent/services/http"
 	_ "potAgent/services/smb"
 	_ "potAgent/services/ssh"

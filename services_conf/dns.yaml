@@ -1,0 +1,22 @@
+protocol: "dns" #固定字段
+application: "dns"
+enable: true
+# 监听地址
+host: "0.0.0.0"
+# 监听端口（常见 DNS 端口 53）
+port: 53
+
+# 未命中 answers 时的默认假记录
+default_a: "10.0.0.1"
+default_aaaa: "fd00:1234::1"
+
+# 针对特定查询名的预置应答
+answers:
+  - name: "intranet.example.com"
+    type: "A"
+    values:
+      - "10.1.2.3"
+  - name: "example.com"
+    type: "AAAA"
+    values:
+      - "fd00:5678::9"

@@ -7,6 +7,36 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
+// DummyUDPConn 是 UDP 包在 ForwardUDPPacketToChan 中的通道元素：
+// 携带本次数据报的字节与源地址，并复用底层 UDPConn 的 Read/Write 能力。
+type DummyUDPConn struct {
+	Data         []byte       // 本次数据报收到的字节
+	UDPAddr      *net.UDPAddr // 数据报源地址
+	*net.UDPConn              // 用于写回应答
+}
+
+// ForwardUDPPacketToChan 与 ForwardListenerToChan 的 UDP 版本。
+// 返回 (UDP 连接, 包通道)；读取 goroutine 在 ReadFrom 出错时直接退出，
+// 由调用方通过 select 的 ctx.Done() 决定何时关闭。
+func ForwardUDPPacketToChan(conn *net.UDPConn) chan *DummyUDPConn {
+	packetChan := make(chan *DummyUDPConn)
+	go func() {
+		buf := make([]byte, 65535)
+		for {
+			n, raddr, err := conn.ReadFromUDP(buf)
+			if err != nil {
+				return
+			}
+			packetChan <- &DummyUDPConn{
+				Data:    buf[:n],
+				UDPAddr: raddr,
+				UDPConn: conn,
+			}
+		}
+	}()
+	return packetChan
+}
+
 // func ForwardUDPToChan(listen *net.UDPConn) chan net.Conn {
 // 	connChan := make(chan net.Conn)
 

@@ -24,15 +24,21 @@ type Event struct {
 }
 
 // NewEvent 构造通用事件，收敛各服务中重复的事件构建样板代码。
-// 当前各服务均为 TCP，故 IPProtocol 固定为 tcp。
+// 默认 IPProtocol 为 tcp；UDP 等协议可在 details 里放 "ip_protocol" 覆盖，
+// 该键会被取出作为顶层字段并从 details 中移除，避免重复。
 func NewEvent(category, eventType string, src, dst common.Addr, details map[string]interface{}) *Event {
+	protocol := "tcp"
+	if p, ok := details["ip_protocol"].(string); ok && p != "" {
+		protocol = p
+		delete(details, "ip_protocol")
+	}
 	return &Event{
 		Timestamp:     time.Now().Format(time.DateTime),
 		EventCategory: category,
 		EventType:     eventType,
 		SrcIP:         src.IP,
 		DstIP:         dst.IP,
-		IPProtocol:    "tcp",
+		IPProtocol:    protocol,
 		SrcPort:       src.Port,
 		DstPort:       dst.Port,
 		Details:       details,
