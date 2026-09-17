@@ -1,0 +1,31 @@
+protocol: "https" #固定字段（复用 http 的处理逻辑，protocol 支持 "https" 或 "http"+tls 块）
+application: "https-secure"
+enable: true
+# 监听地址
+host: "0.0.0.0"
+# 监听端口（常见 HTTPS 端口 443 / 8443）
+port: 8443
+
+# 资源目录，可复用任意 http 资源树
+assets_dir: "./services_conf/assets/http/PhpMyAdmin_4.8.1"
+index: "home.html"
+
+# TLS 配置：配置 cert_file 后该实例走 HTTPS
+tls:
+  cert_file: "./services_conf/https/cert.pem"
+  key_file: "./services_conf/https/key.pem"
+
+request_simulator:
+  - uri: /test1
+    method: GET
+    response:
+      type: json
+      value: |
+        {"code": 0, "msg": "success", "data": "Hello World! test1 (https)"}
+
+  - uri: /test2
+    method: GET
+    response:
+      type: string
+      value: |
+        Hello World! test2 (https)

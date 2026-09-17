@@ -7,10 +7,13 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"crypto/tls"
 	"fmt"
 	"io"
 	"net"
 	"net/http"
+	"os"
+	"path/filepath"
 	"potAgent/common"
 	"potAgent/event"
 	"potAgent/logger"
@@ -19,7 +22,9 @@ import (
 
 var (
 	serviceName = "http"
-	_           = services.Register(serviceName, HTTPServiceInit)
+	// http 与 https 复用同一套请求处理逻辑，是否走 TLS 由配置里的 tls 块驱动
+	_ = services.Register(serviceName, HTTPServiceInit)
+	_ = services.Register("https", HTTPServiceInit)
 )
 
 func HTTPServiceInit() services.Service {
@@ -41,10 +46,17 @@ type request_simulator struct {
 	Response response `mapstructure:"response"`
 }
 
+// tlsConfig 可选的 TLS(HTTPS) 配置，配置 cert_file 后该实例以 TLS 方式响应
+type tlsConfig struct {
+	CertFile string `mapstructure:"cert_file"`
+	KeyFile  string `mapstructure:"key_file"`
+}
+
 type httpConfig struct {
 	Index            string              `mapstructure:"index"`
 	AssetDir         string              `mapstructure:"assets_dir"`
 	RequestSimulator []request_simulator `mapstructure:"request_simulator"`
+	Tls              tlsConfig           `mapstructure:"tls"`
 }
 
 func httpHandle(ctx context.Context, service *services.Service) {
@@ -53,6 +65,19 @@ func httpHandle(ctx context.Context, service *services.Service) {
 		baseOptions    = service.BaseOptions
 	)
 	logger.Log.Debugln(serviceOptions, baseOptions)
+
+	// 可选 TLS(HTTPS)：配置了 cert_file 则以 TLS 方式握手，证书只加载一次
+	var tlsConf *tls.Config
+	if serviceOptions.Tls.CertFile != "" {
+		certFile := resolvePathRelativeToCwd(serviceOptions.Tls.CertFile)
+		keyFile := resolvePathRelativeToCwd(serviceOptions.Tls.KeyFile)
+		cert, err := tls.LoadX509KeyPair(certFile, keyFile)
+		if err != nil {
+			logger.Log.Fatalf("加载 TLS 证书失败: %v", err)
+		}
+		tlsConf = &tls.Config{Certificates: []tls.Certificate{cert}}
+	}
+
 	// 监听
 	address := fmt.Sprintf("%v:%v", baseOptions.Host, baseOptions.Port)
 	network := "tcp4"
@@ -69,13 +94,36 @@ func httpHandle(ctx context.Context, service *services.Service) {
 			logger.Log.Infof("%s service close", serviceName)
 			return
 		case conn := <-connChan:
-			go handleServiceConn(&conn, service)
+			go handleServiceConn(&conn, service, tlsConf)
 		}
 	}
 }
 
-func handleServiceConn(conn *net.Conn, service *services.Service) {
+// resolvePathRelativeToCwd 相对路径按当前工作目录解析（与 httpAssetsRead 一致）
+func resolvePathRelativeToCwd(p string) string {
+	if filepath.IsAbs(p) {
+		return p
+	}
+	if pwd, err := os.Getwd(); err == nil {
+		return filepath.Join(pwd, p)
+	}
+	return p
+}
+
+func handleServiceConn(conn *net.Conn, service *services.Service, tlsConf *tls.Config) {
 	defer (*conn).Close()
+
+	// 配置了 TLS 则先作为服务端握手，后续读写都走 TLS 连接
+	if tlsConf != nil {
+		tlsConn := tls.Server(*conn, tlsConf)
+		if err := tlsConn.Handshake(); err != nil {
+			logger.Log.Warning("tls handshake failed:", err)
+			return
+		}
+		c := net.Conn(tlsConn)
+		conn = &c
+	}
+
 	// 解析HTTP请求内容
 	br := bufio.NewReader(*conn)
 	req, err := http.ReadRequest(br)
