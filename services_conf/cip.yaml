@@ -1,0 +1,21 @@
+protocol: "cip" #固定字段
+application: "allen-bradley-cip"
+enable: true
+# 监听地址
+host: "0.0.0.0"
+# 监听端口（EtherNet/IP 标准端口 44818）
+port: 44818
+
+# iiot config
+# 对外声称的厂商/型号（仅写入事件 details）
+vendor: "Allen-Bradley CompactLogix"
+# 预置标签值（初值）：读的优先级是 已写入数据 > 预置标签 > default_value
+tags:
+  - name: "A1"
+    value: "00 01 00 02"
+# “从未被写过的标签”读出来的数据（十六进制串，可留空 = 全 0，默认取 4 字节）
+default_value: "00 01 00 02"
+# true 时写请求只确认、不落数据
+read_only: false
+# 可选：写数据持久化文件（按标签名存储）
+# store_file: "./data/cip-store.json"

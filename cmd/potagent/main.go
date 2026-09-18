@@ -8,6 +8,7 @@ import (
 
 	_ "potAgent/services/dns"
 	_ "potAgent/services/http"
+	_ "potAgent/services/iiot"
 	_ "potAgent/services/smb"
 	_ "potAgent/services/ssh"
 	_ "potAgent/services/telnet"

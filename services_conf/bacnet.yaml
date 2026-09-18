@@ -1,0 +1,22 @@
+protocol: "bacnet" #固定字段
+application: "bacnet-ip"
+# 默认关闭：47808 是 BACnet/IP 标准端口；测试时改成 enable: true + 大端口（如 47809）
+enable: true
+# 监听地址（BACnet/IP 走 UDP）
+host: "0.0.0.0"
+# 监听端口（BACnet/IP 标准端口 47808）
+port: 47808
+
+# iiot config
+# 对外声称的厂商/型号（仅写入事件 details）
+vendor: "BACnet Building Controller"
+# 设备实例号（Who-Is 应答里的 device id，留空 = 1234）
+device_id: 1234
+# 厂商 ID（I-Am 里的 vendor id，留空 = 15）
+vendor_id: 15
+# 设备对象名（object-name 属性，默认 "PotAgent"；写属性也能改掉它）
+device_name: "PotAgent-BC"
+# true 时写属性回 Write-Access-Denied 错误、不落数据
+read_only: false
+# 可选：写数据持久化文件（present-value 按实例号、object-name 整体存储）
+# store_file: "./data/bacnet-store.json"

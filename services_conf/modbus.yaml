@@ -1,0 +1,21 @@
+protocol: "modbus" #固定字段
+application: "modbus-tcp"
+# 默认关闭：502 是特权端口（<1024），需要 root 才能监听；
+# 测试时改成 enable: true + 大端口（如 1502）
+enable: true
+# 监听地址
+host: "0.0.0.0"
+# 监听端口（Modbus/TCP 标准端口 502）
+port: 502
+
+# iiot config
+# 对外声称的厂商/型号（仅写入事件 details）
+vendor: "Modbus TCP Slave"
+# “从未被写过的地址”读出来的数据（十六进制串，可留空 = 全 0）
+default_value: "00 01 00 02 00 03 00 04"
+# 站号过滤：请求站号不一致时不响应（0 = 不过滤）
+unit_id: 1
+# true 时写请求只确认、不落数据，读到的永远是 default_value
+read_only: false
+# 可选：写数据持久化文件（JSON 快照，重启后还能读到写入的值）；留空 = 仅内存
+# store_file: "./data/modbus-store.json"

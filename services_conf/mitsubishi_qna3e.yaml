@@ -1,0 +1,17 @@
+protocol: "mitsubishi_qna3e" #固定字段
+application: "mitsubishi-qna3e"
+enable: true
+# 监听地址
+host: "0.0.0.0"
+# 监听端口（三菱 MC Qna-3E，常用 6000 等自定义端口）
+port: 6000
+
+# iiot config
+# 对外声称的厂商/型号（仅写入事件 details）
+vendor: "Mitsubishi Q03UDECPU"
+# “从未被写过的地址”读出来的数据（十六进制串，可留空 = 全 0）
+default_value: "00 01 00 02"
+# true 时写请求只确认、不落数据
+read_only: false
+# 可选：写数据持久化文件（按软元件码分区，如 0x90=M、0xa8=D）
+# store_file: "./data/mitsubishi-qna3e-store.json"

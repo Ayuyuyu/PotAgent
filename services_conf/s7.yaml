@@ -1,0 +1,19 @@
+protocol: "s7" #固定字段
+application: "siemens-s7"
+# 默认关闭：102 是特权端口，需要 root 才能监听；
+# 测试时改成 enable: true + 大端口（如 1102）
+enable: true
+# 监听地址
+host: "0.0.0.0"
+# 监听端口（S7comm 标准端口 102）
+port: 102
+
+# iiot config
+# 对外声称的厂商/型号（仅写入事件 details）
+vendor: "Siemens S7-300"
+# “从未被写过的地址”读出来的数据（十六进制串，可留空 = 全 0）
+default_value: "00 01 00 02"
+# true 时写请求只确认、不落数据
+read_only: false
+# 可选：写数据持久化文件（按 S7 区域码分区块，如 0x81=I、0x83=M、0x84=DB）
+# store_file: "./data/s7-store.json"

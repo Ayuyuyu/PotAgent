@@ -1,0 +1,41 @@
+protocol: "mqtt" #固定字段
+application: "mqtt-broker"
+# 默认关闭：1883 是 MQTT 标准端口；测试时改成 enable: true + 大端口（如 11883）
+enable: true
+# 监听地址
+host: "0.0.0.0"
+# 监听端口（MQTT 标准端口 1883，TLS 版见 mqtts.yaml 的 8883）
+port: 1883
+
+# iiot config
+# 对外声称的厂商/型号（仅写入事件 details）
+vendor: "PotAgent MQTT Broker"
+# 预置的保留消息（初值）：订阅命中时回放给客户端（订阅过滤器支持 + / # 通配）；
+# 之后如果有客户端以 retain=1 发布同一主题，会覆盖这里的初值
+topics:
+  - topic: "$SYS/broker/version"
+    payload: "PotAgent-MQTT 1.0"
+    qos: 0
+    retain: true
+  - topic: "sensors/room1/temperature"
+    payload: "23.5"
+    qos: 0
+    retain: true
+  - topic: "devices/plc01/status"
+    payload: '{"online":true,"mode":"auto"}'
+    qos: 1
+    retain: true
+# 保留消息语义（MQTT 规范）：
+#   retain=1 的发布 → 落存储，之后任何订阅到该主题的客户端都会立刻收到（配了 store_file 还能跨重启）
+#   retain=1 + 空 payload → 清除该主题的保留消息
+#   retain=0 的发布 → 不留给后续订阅者，但会实时转发给当前在线的订阅者
+# 把 retain_all 设为 true 可以放宽为“所有发布都留作可回放数据”（默认 false）
+retain_all: false
+# true 时发布的消息不落数据（订阅时只能拿到预置初值）
+read_only: false
+# 可选：主题数据持久化文件（JSON 快照，重启后订阅还能读到上次发布的值）
+# store_file: "./data/mqtt-store.json"
+# 可选 TLS（同目录下另有一份 protocol: "mqtts" 的示例）
+# tls:
+#   cert_file: "./services_conf/https/cert.pem"
+#   key_file: "./services_conf/https/key.pem"

@@ -1,0 +1,19 @@
+protocol: "fins" #固定字段
+application: "omron-fins"
+enable: true
+# 监听地址
+host: "0.0.0.0"
+# 监听端口（Omron FINS/TCP 常用端口 9600）
+port: 9600
+
+# iiot config
+# 对外声称的厂商/型号（仅写入事件 details）
+vendor: "Omron CJ2"
+# “从未被写过的地址”读出来的数据（十六进制串，可留空 = 全 0）
+default_value: "00 01 00 02"
+# FINS/TCP 握手应答里的服务器节点编号（留空 = 1）
+node: 1
+# true 时写请求只确认、不落数据
+read_only: false
+# 可选：写数据持久化文件（按数据区码分区，如 0x82=DM 字、0x30=CIO 位）
+# store_file: "./data/fins-store.json"

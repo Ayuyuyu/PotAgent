@@ -1,0 +1,25 @@
+protocol: "mqtts" #固定字段（MQTT over TLS，必须配置 tls 块）
+application: "mqtt-broker-tls"
+# 默认关闭：8883 是 MQTT/TLS 标准端口；测试时改成 enable: true + 大端口（如 18883）
+enable: false
+# 监听地址
+host: "0.0.0.0"
+# 监听端口（MQTT/TLS 标准端口 8883）
+port: 8883
+
+# iiot config
+# 对外声称的厂商/型号（仅写入事件 details）
+vendor: "PotAgent MQTT Broker (TLS)"
+# 预置的保留消息（订阅过滤器支持 + / # 通配；retain=1 的发布同样会覆盖初值并跨重启保留）
+topics:
+  - topic: "sensors/room1/temperature"
+    payload: "23.5"
+    qos: 0
+    retain: true
+retain_all: false
+read_only: false
+# store_file: "./data/mqtts-store.json"
+# mqtts 必须配置证书（仓库自带的测试用自签证书，也可换成正式证书）
+tls:
+  cert_file: "./services_conf/https/cert.pem"
+  key_file: "./services_conf/https/key.pem"
