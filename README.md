@@ -7,13 +7,21 @@ PotAgent 使用golang完成开发。PotAgent在好几年前就已经完成，现
 低廉的性能占用，大范围的模拟才能更好的构成完整的感知网络。
 ## Feature
 * **服务模拟**   
+- [x] http
+- [x] https
 - [x] ssh
 - [x] telnet
 - [x] vnc
-- [x] http
+- [x] rdp（标准 RDP 安全 / TLS / NLA-CredSSP 三种协商；可还原**明文口令**或抓取
+     **NetNTLMv2**；连接后展示伪桌面并记录键鼠输入，效果对齐 VNC 服务）
 - [x] smb
 - [x] dns
-- [x] https
+- [] ftp
+- [] ftps
+- [] ntp
+- [] sntp
+- [] snmp
+- [] ldap
 - [x] IIoT 系列（工业物联网 · 工控 OT）：modbus-tcp / s7 / cip / fins / mitsubishi a1e+qna3e / bacnet
 - [x] IIoT 系列（工业物联网 · 消息协议）：mqtt（含 mqtts / TLS）
 * **多服务配置启动**   
@@ -35,7 +43,7 @@ go build -o PotAgent ./cmd/potagent
 **文件目录**  
 ```
 ├─services_conf/
-│  ├─*.yaml          # 各服务实例配置（http / https / smb / ssh / telnet / vnc / dns / iiot 各协议）
+│  ├─*.yaml          # 各服务实例配置（http / https / smb / ssh / telnet / vnc / rdp / dns / iiot 各协议）
 │  ├─https/         # HTTPS 自签证书 cert.pem / key.pem（测试用）
 │  └─assets/        # 各协议静态资源，由 assets.zip 启动时解压
 ├─PotAgent          # 主程序

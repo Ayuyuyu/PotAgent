@@ -1,0 +1,36 @@
+protocol: "rdp" #固定字段
+application: "rdp"
+enable: true
+# 监听地址
+host: "0.0.0.0"
+# 监听端口（RDP 默认 3389）
+port: 3389
+
+# 协商模式，决定能拿到什么：
+#   negotiate：按客户端请求挑，NLA 客户端给 NetNTLMv2、其余给明文口令（推荐，兼容性最好）
+#   rdp      ：强制标准 RDP 安全（RC4）——客户端会把口令交给服务器 RSA 公钥加密，我们持有私钥，能拿明文
+#   tls      ：强制 TLS——同样能拿明文口令，而且画面/交互最接近真机
+#   hybrid   ：强制 NLA/CredSSP——只能拿 NetNTLMv2 响应（可 hashcat -m 5600 破解或做中继），
+#              抓完就断（蜜罐无法通过认证），不会有桌面
+security: "negotiate"
+
+# 证书：留空则自动生成 2048 位自签 RSA 证书。
+# 注意必须是 RSA 私钥——RDP 的口令字段是用服务器 RSA 公钥加密的，ECDSA 证书解不开。
+cert_file: ""
+key_file: ""
+# key_bits: 2048
+
+# 客户端连上后看到的伪造身份信息（会出现在服务器证书与 NLA 挑战里）
+hostname: "WIN-DC01"
+domain: "CORP"
+
+# 连接后展示的桌面图（换成 Windows 登录界面截图更逼真）
+img_path: "./services_conf/assets/vnc/vnc.png"
+# 桌面分辨率，0 表示跟随客户端请求
+width: 0
+height: 0
+
+# 是否把捕获到的明文口令写进事件（关掉就只记用户名）
+log_password: true
+# 空闲多久断开（秒）
+idle_timeout_seconds: 900
