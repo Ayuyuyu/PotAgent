@@ -9,6 +9,7 @@ import (
 	_ "potAgent/services/dns"
 	_ "potAgent/services/ftp"
 	_ "potAgent/services/ntp"
+	_ "potAgent/services/snmp"
 	_ "potAgent/services/http"
 	_ "potAgent/services/iiot"
 	_ "potAgent/services/rdp"
