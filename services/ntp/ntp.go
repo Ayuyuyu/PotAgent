@@ -84,12 +84,12 @@ func handleNTP(packet *common.DummyUDPConn, service *services.Service, cfg *ntpC
 	}
 
 	event.EventPush(event.NewEvent(proto, proto+"-request", src, dst, map[string]interface{}{
-		"ip_protocol":  "udp",
-		"protocol":     service.BaseOptions.Protocol,
-		"application":  service.BaseOptions.Application,
-		"ntp.version":  vn,
-		"ntp.mode":     mode,
-		"ntp.raw":      fmt.Sprintf("%x", req),
+		"ip_protocol": "udp",
+		"protocol":    service.BaseOptions.Protocol,
+		"application": service.BaseOptions.Application,
+		"ntp.version": vn,
+		"ntp.mode":    mode,
+		"ntp.raw":     fmt.Sprintf("%x", req),
 	}))
 
 	resp := buildNTPResponse(req, cfg, refU32, vn)

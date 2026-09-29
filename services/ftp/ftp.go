@@ -685,6 +685,7 @@ func (s *ftpSession) defaultCwdOk(arg string) (string, bool) {
 // changeDir 处理 CWD/XCWD/CDUP：把 arg 解析为 share_dir 内的新路径并保存。
 //   - 以 "/" 开头的 arg 视为相对 share_dir 根（我们呈现为 "/"），忽略当前目录。
 //   - 否则相对当前目录（s.cwd）解析。
+//
 // 越界（逃出 share_dir 根）拒绝；仅允许进入真实存在的目录；根目录的 ".." 保持在根。
 func (s *ftpSession) changeDir(arg string) {
 	target, ok := s.resolveUnderRoot(arg)

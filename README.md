@@ -20,9 +20,21 @@ PotAgent 使用golang完成开发。PotAgent在好几年前就已经完成，现
 - [x] ntp
 - [x] sntp
 - [x] snmp
-- [] ldap
+- [x] ldap
+- []rtsp
+- []docker-api / kubernetes
+- []smtp
+- []sip
+- []tftp
+- []redis
+- []memcached
+- []mysql
+- []postgresql
+- []mongodb
+- []elasticsearch
 - [x] IIoT 系列（工业物联网 · 工控 OT）：modbus-tcp / s7 / cip / fins / mitsubishi a1e+qna3e / bacnet
 - [x] IIoT 系列（工业物联网 · 消息协议）：mqtt（含 mqtts / TLS）
+
 * **多服务配置启动**   
 通过配置文件，实现多个不同端口的不同服务内容。
 详情见service_conf中的配置文件。

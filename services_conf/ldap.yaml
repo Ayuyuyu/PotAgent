@@ -1,0 +1,23 @@
+protocol: "ldap" #固定字段
+application: "ldap"
+enable: true
+# 监听地址
+host: "0.0.0.0"
+# 监听端口（标准 LDAP 端口 389；<1024 需 root 启动）
+port: 389
+
+# 伪目录基准 DN（Search 回应里的诱饵条目以此为基础构造，如 cn=admin,<base_dn>）
+base_dn: "dc=example,dc=com"
+
+# 可选：Search 回应的诱饵条目属性（PartialAttributeList）。不配则用内置默认
+# （objectClass/cn/sn/uid/mail/userPassword）。条目 DN 优先取下面 cn 的值作 RDN，
+# 否则回落 cn=admin,<base_dn>。
+fake_entry:
+  - type: "objectClass"
+    values: ["top", "person", "organizationalPerson", "inetOrgPerson"]
+  - type: "cn"
+    values: ["admin"]
+  - type: "sn"
+    values: ["root"]
+  - type: "mail"
+    values: ["admin@example.com"]
