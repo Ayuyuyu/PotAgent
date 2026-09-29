@@ -1,0 +1,35 @@
+protocol: "ftp" #固定字段
+application: "ftp"
+enable: true
+# 监听地址
+host: "0.0.0.0"
+# 监听端口（FTP 默认 21；非 root 可改大，如 2121）
+port: 21
+
+# 欢迎横幅（连接后首行 220 的内容，会自动补 "220 " 前缀）
+banner: "PotAgent FTP Server ready."
+# 出现在 SYST / FEAT 里的系统名（伪造身份）
+hostname: "ProFTPD"
+# 登录成功后提示
+welcome: "User logged in. Restricted area."
+
+# 账号：留空（默认）则接受任意用户名/口令并全量落日志（蜜罐抓凭据模式）。
+# 若要限定，可填具体账号；username 写 "*" 表示通配任意账号。
+accounts: []
+#  - username: "admin"
+#    password: "admin"
+
+# PASV 响应里回给客户端的 IP；留空则自动探测本机出口 IP（host=0.0.0.0 时很有用）
+# 若部署在 NAT 后，请填对外可达的 IP。
+pasv_addr: ""
+# 空闲超时（秒）
+idle_timeout_seconds: 900
+
+# 共享目录：配置后 LIST 在 share_dir 根目录展示本机真实文件作为诱饵（含子目录条目）；
+#           但一旦 CWD 进入任意子目录，再 LIST 只返回空目录（. 与 ..），不泄露子目录内容。
+#           未配置 share_dir 则用内置默认伪列表（含 readme.txt 等诱饵文件）。
+# 注意：RETR 会直接回 share_dir 内对应诱饵文件的真实内容（放上来的本就是诱饵）；
+#       仅当文件不存在或越界时才回固定 dummy。SIZE 同理返回真实大小。
+share_dir: "./services_conf/assets/ftp"
+# 自定义 LIST 文本（优先级高于 share_dir，一般无需配置；留空才用 share_dir）
+# listing: "-rw-r--r-- 1 user user    12345 Jan 02 15:04 readme.txt\r\n"

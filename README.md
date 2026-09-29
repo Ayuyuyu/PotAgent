@@ -12,12 +12,11 @@ PotAgent 使用golang完成开发。PotAgent在好几年前就已经完成，现
 - [x] ssh
 - [x] telnet
 - [x] vnc
-- [x] rdp（标准 RDP 安全 / TLS / NLA-CredSSP 三种协商；可还原**明文口令**或抓取
-     **NetNTLMv2**；连接后展示伪桌面并记录键鼠输入，效果对齐 VNC 服务）
+- [x] rdp
 - [x] smb
 - [x] dns
-- [] ftp
-- [] ftps
+- [x] ftp
+- [x] ftps
 - [] ntp
 - [] sntp
 - [] snmp

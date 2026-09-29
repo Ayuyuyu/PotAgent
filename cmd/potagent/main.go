@@ -7,6 +7,7 @@ import (
 	"potAgent/logger"
 
 	_ "potAgent/services/dns"
+	_ "potAgent/services/ftp"
 	_ "potAgent/services/http"
 	_ "potAgent/services/iiot"
 	_ "potAgent/services/rdp"

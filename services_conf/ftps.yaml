@@ -1,0 +1,32 @@
+protocol: "ftps" #固定字段（与 ftp 共用实现，由 mode 决定行为）
+application: "ftps"
+enable: true
+# 监听地址
+host: "0.0.0.0"
+# 监听端口
+#   mode=ftps（显式）：通常 21，客户端用 AUTH TLS 升级
+#   mode=ftps-implicit（隐式）：通常 990，连接即 TLS
+port: 990
+
+# FTPS 模式：
+#   ftps          显式 FTPS（AUTH TLS / AUTH SSL 升级控制通道）
+#   ftps-implicit 隐式 FTPS（连接即 TLS）
+mode: "ftps-implicit"
+
+# 欢迎横幅
+banner: "PotAgent FTPS Server ready."
+hostname: "ProFTPD"
+welcome: "User logged in. Restricted area."
+
+# FTPS 证书：留空则自动生成 2048 位自签 RSA（客户端会报证书不受信任，属正常）。
+# 也可指向正式证书：
+cert_file: ""
+key_file: ""
+
+accounts: []
+pasv_addr: ""
+idle_timeout_seconds: 900
+
+# 共享目录：同 ftp.yaml，LIST 读取本机目录内容生成列表
+# share_dir: "./services_conf/assets/ftp"
+# listing: ""
