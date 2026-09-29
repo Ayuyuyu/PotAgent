@@ -1,0 +1,12 @@
+protocol: "ntp" #固定字段
+application: "ntp"
+enable: true
+# 监听地址
+host: "0.0.0.0"
+# 监听端口（标准 NTP 端口 123；SNTP 同端口，二者线格式一致）
+port: 123
+
+# 响应中的 stratum（2=二级服务器，1=一级/原子钟）
+stratum: 2
+# 4 字节参考标识（ASCII，不足补 0、超长截断），如上游服务器 IP 或 LOCL/GPS
+ref_id: "LOCL"
