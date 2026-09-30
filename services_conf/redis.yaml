@@ -1,0 +1,15 @@
+protocol: "redis" #固定字段
+application: "redis"
+enable: true
+# 监听地址
+host: "0.0.0.0"
+port: 6379
+
+# 留空（或不配置）则使用内置默认 fakeRedisInfo；可自定义以伪装成特定版本/环境。
+# fake_info: |
+#   # Server
+#   redis_version:6.2.7
+#   redis_mode:standalone
+#   os:Linux 3.10.0 x86_64
+#   ...
+

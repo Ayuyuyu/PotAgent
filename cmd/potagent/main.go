@@ -13,6 +13,7 @@ import (
 	_ "potAgent/services/ldap"
 	_ "potAgent/services/ntp"
 	_ "potAgent/services/rdp"
+	_ "potAgent/services/redis"
 	_ "potAgent/services/smb"
 	_ "potAgent/services/snmp"
 	_ "potAgent/services/ssh"

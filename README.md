@@ -26,7 +26,7 @@ PotAgent 使用golang完成开发。PotAgent在好几年前就已经完成，现
 - []smtp
 - []sip
 - []tftp
-- []redis
+- [x] redis
 - []memcached
 - []mysql
 - []postgresql
