@@ -18,6 +18,7 @@ import (
 	_ "potAgent/services/snmp"
 	_ "potAgent/services/ssh"
 	_ "potAgent/services/telnet"
+	_ "potAgent/services/tftp"
 	_ "potAgent/services/vnc"
 
 	"github.com/urfave/cli/v2"

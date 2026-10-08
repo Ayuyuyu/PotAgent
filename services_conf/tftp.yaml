@@ -1,0 +1,14 @@
+protocol: "tftp" #固定字段
+application: "tftp"
+enable: true
+# 监听地址
+host: "0.0.0.0"
+port: 69
+
+# RRQ（读请求）回应的伪文件内容；仅在 share_dir 未配置时生效。
+# file_content: |
+#   # PotAgent TFTP honeypot
+#   fake config content
+
+# 共享目录（绝对路径，或相对进程 CWD 的相对路径）：配置后 RRQ 读取本目录内真实文件下发、
+share_dir: "./services_conf/assets/tftp"
