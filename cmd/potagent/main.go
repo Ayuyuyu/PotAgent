@@ -16,6 +16,8 @@ import (
 	_ "potAgent/services/rdp"
 	_ "potAgent/services/redis"
 	_ "potAgent/services/smb"
+	_ "potAgent/services/smtp"
+	_ "potAgent/services/smtps"
 	_ "potAgent/services/snmp"
 	_ "potAgent/services/ssh"
 	_ "potAgent/services/telnet"

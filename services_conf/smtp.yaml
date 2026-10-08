@@ -1,0 +1,14 @@
+protocol: "smtp" #固定字段
+application: "smtp"
+enable: true
+# 监听地址；25 为标准 SMTP，587 为邮件提交(submission)，两者共用本配置，按需改端口
+host: "0.0.0.0"
+port: 25
+
+# 220 欢迎语中主机名之后的内容；留空（或不配置）使用内置默认 "mail ESMTP PotAgent"。
+# banner: "mx.example.com ESMTP Postfix"
+
+# STARTTLS 证书；同时配置时优先加载文件，否则 STARTTLS 时自动生成自签 RSA2048。
+# 未配置则 STARTTLS 命令回 502。
+# cert_file: "certs/smtp.crt"
+# key_file: "certs/smtp.key"

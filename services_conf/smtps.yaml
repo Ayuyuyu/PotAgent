@@ -1,0 +1,13 @@
+protocol: "smtps" #固定字段
+application: "smtps"
+enable: true
+# 监听地址；465 为 SMTPS（RFC 8314 隐式 TLS，连接即 SSL/TLS）
+host: "0.0.0.0"
+port: 465
+
+# 220 欢迎语中主机名之后的内容；留空（或不配置）使用内置默认 "mail ESMTP PotAgent"。
+# banner: "mx.example.com ESMTP Postfix"
+
+# 隐式 TLS 证书；同时配置时优先加载文件，否则自动生成自签 RSA2048（每次连接）。
+# cert_file: "certs/smtps.crt"
+# key_file: "certs/smtps.key"
