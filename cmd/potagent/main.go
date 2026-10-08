@@ -11,6 +11,7 @@ import (
 	_ "potAgent/services/http"
 	_ "potAgent/services/iiot"
 	_ "potAgent/services/ldap"
+	_ "potAgent/services/memcached"
 	_ "potAgent/services/ntp"
 	_ "potAgent/services/rdp"
 	_ "potAgent/services/redis"

@@ -1,0 +1,9 @@
+protocol: "memcached" #固定字段
+application: "memcached"
+enable: true
+# 监听地址
+host: "0.0.0.0"
+port: 11211
+
+# VERSION 命令返回的版本号；留空（或不配置）使用内置默认 1.6.21。
+# version: "1.6.18"
