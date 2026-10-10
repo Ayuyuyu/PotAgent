@@ -15,6 +15,7 @@ import (
 	_ "potAgent/services/ntp"
 	_ "potAgent/services/rdp"
 	_ "potAgent/services/redis"
+	_ "potAgent/services/sip"
 	_ "potAgent/services/smb"
 	_ "potAgent/services/smtp"
 	_ "potAgent/services/smtps"

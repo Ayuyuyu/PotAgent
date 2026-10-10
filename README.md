@@ -25,7 +25,7 @@ PotAgent 使用golang完成开发。PotAgent在好几年前就已经完成，现
 - []docker-api / kubernetes
 - [x]smtp
 - [x]smtps
-- []sip
+- [x]sip
 - [x]tftp
 - [x] redis
 - [x]memcached

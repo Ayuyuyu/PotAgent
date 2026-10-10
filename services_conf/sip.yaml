@@ -1,0 +1,9 @@
+protocol: "sip" #固定字段
+application: "sip"
+enable: true
+# 监听地址（UDP 5060）
+host: "0.0.0.0"
+port: 5060
+
+# 401 摘要质询返回的 realm；留空（或不配置）使用内置默认 "PotAgent"。
+# realm: "example.com"
