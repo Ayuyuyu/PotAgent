@@ -10,5 +10,7 @@ port: 69
 #   # PotAgent TFTP honeypot
 #   fake config content
 
-# 共享目录（绝对路径，或相对进程 CWD 的相对路径）：配置后 RRQ 读取本目录内真实文件下发、
+# 共享目录（绝对路径，或相对进程 CWD 的相对路径）：配置后 RRQ 会读取本目录内真实文件
+# 按 512 字节分块下发，WRQ 上传的内容也会真实落盘到该目录（带 ../ 越界防护）；
+# 留空则 RRQ 回上面的 file_content 伪文件，WRQ 只接收不落盘。
 share_dir: "./services_conf/assets/tftp"

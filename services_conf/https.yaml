@@ -10,7 +10,7 @@ port: 8443
 assets_dir: "./services_conf/assets/http/PhpMyAdmin_4.8.1"
 index: "home.html"
 
-# TLS 配置：配置 cert_file 后该实例走 HTTPS
+# TLS 配置：配置 cert_file 后该实例走 HTTPS；证书文件不存在时自动生成自签证书
 tls:
   cert_file: "./services_conf/https/cert.pem"
   key_file: "./services_conf/https/key.pem"

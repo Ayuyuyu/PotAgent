@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"potAgent/common"
 	"potAgent/global"
 	"potAgent/logger"
 	"potAgent/services"
@@ -151,7 +152,7 @@ func TestFTPSExplicitIntegration(t *testing.T) {
 	c.expect("234 ")
 
 	// 客户端侧把控制通道升级为 TLS
-	tlsCtrl := tls.Client(conn, &tls.Config{InsecureSkipVerify: true})
+	tlsCtrl := tls.Client(conn, common.NewInsecureClientConfig())
 	if err := tlsCtrl.Handshake(); err != nil {
 		t.Fatalf("tls handshake: %v", err)
 	}
@@ -180,7 +181,7 @@ func TestFTPSExplicitIntegration(t *testing.T) {
 	if err != nil {
 		t.Fatalf("dial data: %v", err)
 	}
-	tdata := tls.Client(dconn, &tls.Config{InsecureSkipVerify: true})
+	tdata := tls.Client(dconn, common.NewInsecureClientConfig())
 	if err := tdata.Handshake(); err != nil {
 		t.Fatalf("data tls handshake: %v", err)
 	}

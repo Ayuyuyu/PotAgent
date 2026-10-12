@@ -64,7 +64,7 @@ func TestImplicitTLS(t *testing.T) {
 	}
 	defer c.Close()
 	// 客户端必须先 TLS 握手，再读 220 欢迎语
-	tlsConn := tls.Client(c, &tls.Config{InsecureSkipVerify: true})
+	tlsConn := tls.Client(c, common.NewInsecureClientConfig())
 	if err := tlsConn.Handshake(); err != nil {
 		t.Fatalf("client handshake: %v", err)
 	}

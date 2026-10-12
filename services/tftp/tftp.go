@@ -1,5 +1,21 @@
 package tftp
 
+/*
+TFTP 蜜罐服务（UDP 69，RFC 1350：RRQ 1 / WRQ 2 / DATA 3 / ACK 4 / ERROR 5，块 512 字节）。
+
+低交互策略：
+  - 单 reader 内联处理（不用 ForwardUDPPacketToChan，避免 WRQ 会话数据串台），
+    2s 读超时周期检查 ctx。
+  - RRQ：share_dir 命中则按 512 分块真实下发（每块等 ACK），否则回 file_content 伪文件
+    （不足 512 视为 EOF）；WRQ：先 ACK(0)，recvWrite 按递增块号收 DATA 并逐块 ACK，
+    上限 64KB、5s 超时结束；share_dir 配置且未越界时真实落盘（MkdirAll + WriteFile 0644），
+    带 ../ 越界防护。
+  - 畸形 RRQ/WRQ 回 ERROR(4, "Illegal TFTP operation")；share_dir 下缺失/越界/目录回
+    ERROR(1, "File not found")；乱序块不 ACK；DATA/ACK/ERR 等非首包忽略。
+  - 事件 tftp-request 含 operation(RRQ/WRQ)/filename/mode/options/raw(hex)/
+    data(hex)/data_size/served_path。
+*/
+
 import (
 	"bytes"
 	"context"

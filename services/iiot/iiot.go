@@ -1,5 +1,41 @@
 package iiot
 
+/*
+IIoT / 工控协议蜜罐服务（TCP + UDP，一个 Init 覆盖 9 个 protocol key，事件类别统一 iiot）。
+端口：modbus 502 / s7 102 / cip 44818 / fins 9600 / mitsubishi_a1e 8899 /
+mitsubishi_qna3e 6000 / mqtt 1883 / mqtts 8883（强制 TLS）；bacnet 为 UDP 47808。
+
+低交互策略：
+  - 每份 yaml 一个 dataStore（多连接共享、加锁）：read 未写过的地址回落 default_value，
+    write/set 受 read_only 与单区 1MB 上限约束；可选 store_file JSON 快照持久化（重启仍读到写入值）；
+    setBit/getBit 服务 S7 与三菱的位寻址。
+  - modbus：MBAP+PDU，功能码 1/2/3/4 读、5/6/15/16 写，线圈/离散量/保持/输入四区真存真取，
+    unit_id 不一致不响应（0=不过滤）。
+  - s7：TPKT+COTP+S7 PDU，两条连接初始化指令原样回显，request[17] 区分读(4)/写(5)，
+    区域按类型码 0x81/0x82/0x83/0x84 分存储区。
+  - cip：EtherNet/IP 28 字节封装头，0x65+0x04 注册会话回固定握手；读标签 0x4C / 写标签 0x4D，
+    读优先级「已写入 > 预置 tags > 默认值」。
+  - fins：20 字节头 + 14 字节尾，握手回 24 字节（含 node）；命令码 1 读 / 2 写，
+    位区 1 字节 1 位、字区 2 字节 1 字。
+  - 三菱 A-1E / Qna-3E：12 / 21 字节头，读位/读字/写位/写字，位区 1 字节 2 点位、字区 2 字节 1 字。
+  - bacnet：BVLC+APDU，只做 Who-Is/I-Am 与 Read-Property（单属性）/Write-Property
+    （PresentValue/Object-Name），写值落 dataStore，不实现 COV 订阅。
+  - mqtt/mqtts：CONNECT/PUBLISH(QoS0/1、retain)/SUBSCRIBE/UNSUBSCRIBE/PINGREQ/DISCONNECT/
+    PUBREC-PUBCOMP 全流程；在线会话表实时转发（按 min(发布QoS, 订阅QoS) 降级），retain=1 落
+    dataStore 供后续订阅回放，空 payload 保留消息=清除主题；CONNECT 的 username/password 与
+    will 全捕获。
+  - MQTT 不校验口令，一律 CONNACK 成功（凭据原样落事件）；其余协议无认证概念。
+  - 未知功能码/命令码/服务码记 ics.operation=function-N/service-N 且不回包；
+    帧长度非法或超上限直接断开；短帧记录后 continue。
+  - 事件类型 <protocol>-connect（如 modbus-connect）与 <protocol>-request，字段含
+    protocol/application、ics.vendor、ics.raw(hex)、ics.operation、ics.address，
+    及协议专属：modbus.unit-id/function/address/quantity、cip.address/data/value/stored、
+    fins.command/data-area/address/length/value/stored、mitsubishi.points/value/stored、
+    mqtt.username/password/topic/qos/retain/payload/topics/client-id 及 will 相关字段。
+  - 核心情报：谁在扫描/操控工控设备、读写了哪些寄存器/标签/主题，以及 MQTT 凭证与 payload
+    （PLC 设定值篡改是最有价值的信号）。
+*/
+
 import (
 	"context"
 	"crypto/tls"
@@ -316,22 +352,24 @@ func resolvePathRelativeToCwd(p string) string {
 }
 
 // loadTLSConfig 按配置加载证书；require=true（mqtts）时必须配置，否则报错退出。
-func loadTLSConfig(cfg *iiotConfig, require bool) (*tls.Config, error) {
+// 配置了 cert_file 时优先从文件加载，文件不存在则回退自动生成自签证书（common.LoadOrGenCert）。
+func loadTLSConfig(cfg *iiotConfig, require bool, hostname string) (*tls.Config, error) {
 	if cfg == nil || cfg.Tls.CertFile == "" {
 		if require {
 			return nil, fmt.Errorf("iiot: 协议 mqtts 需要在 yaml 里配置 tls.cert_file / tls.key_file")
 		}
 		return nil, nil
 	}
-	cert, err := tls.LoadX509KeyPair(
+	cert, err := common.LoadOrGenCert(
 		resolvePathRelativeToCwd(cfg.Tls.CertFile),
 		resolvePathRelativeToCwd(cfg.Tls.KeyFile),
+		hostname,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("iiot: 加载 TLS 证书失败: %w", err)
 	}
 	logger.Log.Infoln("iiot: TLS enabled, cert =", cfg.Tls.CertFile)
-	return &tls.Config{Certificates: []tls.Certificate{cert}}, nil
+	return common.NewServerTLSConfig(cert), nil
 }
 
 // iiotHandle 按协议选择 TCP / UDP 收包方式，其余交给各协议处理函数。
@@ -349,7 +387,7 @@ func iiotHandle(ctx context.Context, service *services.Service) {
 	}
 
 	// 可选 TLS：目前只有 MQTT 用（IIoT 场景里 MQTT over TLS 很常见）
-	tlsConf, err := loadTLSConfig(&cfg, base.Protocol == "mqtts")
+	tlsConf, err := loadTLSConfig(&cfg, base.Protocol == "mqtts", base.Application)
 	if err != nil {
 		logger.Log.Fatalln(err)
 	}

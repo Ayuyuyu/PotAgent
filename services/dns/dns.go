@@ -1,5 +1,16 @@
 package dns
 
+/*
+DNS 蜜罐服务（UDP 53，RFC 1035 报文结构）。
+
+低交互策略：
+  - 逐数据报解析查询头与问题段（id/qname/qtype），qtype 支持 A/AAAA/PTR/MX/TXT/SRV 等可读名。
+  - 应答优先命中 yaml 预置 answers（仅 A/AAAA 可编码）；未命中且配了 default_a/default_aaaa
+    时对 A/AAAA 回假记录，其余类型/无配置回 0 answer 空响应。无存储、无状态机。
+  - 报文残缺（<12 字节或解析失败）不回包直接返回；未知 qtype 仍回响应但无记录。
+  - 事件 dns-query 含 query-id/qname/qtype 与原始报文 raw(hex)。
+*/
+
 import (
 	"context"
 	"fmt"

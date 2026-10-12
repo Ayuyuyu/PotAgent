@@ -6,9 +6,6 @@ SIP 蜜罐服务（UDP 5060，RFC 3261 文本协议）。
 低交互策略：
   - 解析请求行（METHOD URI SIP/2.0）与首部（Via/From/To/Contact/Call-ID/CSeq/
     Authorization/User-Agent 等），逐数据报处理。
-  - 核心情报是凭证：REGISTER 与 INVITE 一律回 401 + WWW-Authenticate 摘要质询，
-    诱导客户端重发带 Authorization 的请求，从而把 Digest 的 username/realm/nonce/
-    uri/response 原样落进事件，便于还原 SIP 爆破/SIPVicious 攻击链。
   - OPTIONS 回 200（带 Allow），其余已识别方法回 200，未知方法回 501；
     请求本身无论是否挑战均已落事件。
   - 事件 sip-request 含方法、URI、call-id、from/to（及提取的用户）、contact、via、

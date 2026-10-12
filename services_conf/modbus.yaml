@@ -1,7 +1,6 @@
 protocol: "modbus" #固定字段
 application: "modbus-tcp"
-# 默认关闭：502 是特权端口（<1024），需要 root 才能监听；
-# 测试时改成 enable: true + 大端口（如 1502）
+# 502 是特权端口（<1024）
 enable: true
 # 监听地址
 host: "0.0.0.0"

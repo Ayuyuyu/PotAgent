@@ -3,7 +3,7 @@ application: "ntp"
 enable: true
 # 监听地址
 host: "0.0.0.0"
-# 监听端口（标准 NTP 端口 123；SNTP 同端口，二者线格式一致）
+# 监听端口（标准 NTP 端口 123；SNTP 同端口、线格式一致，与 sntp.yaml 二者只能启用其一，否则端口冲突）
 port: 123
 
 # 响应中的 stratum（2=二级服务器，1=一级/原子钟）

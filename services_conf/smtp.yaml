@@ -8,7 +8,7 @@ port: 25
 # 220 欢迎语中主机名之后的内容；留空（或不配置）使用内置默认 "mail ESMTP PotAgent"。
 # banner: "mx.example.com ESMTP Postfix"
 
-# STARTTLS 证书；同时配置时优先加载文件，否则 STARTTLS 时自动生成自签 RSA2048。
-# 未配置则 STARTTLS 命令回 502。
+# STARTTLS 证书：同时配置时优先从文件加载，文件不存在则自动生成自签 RSA2048（每次连接）。
+# 两项均不配置时同样自动生成自签证书，STARTTLS 始终可用（客户端会报证书不受信任，属正常）。
 # cert_file: "certs/smtp.crt"
 # key_file: "certs/smtp.key"

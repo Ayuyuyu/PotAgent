@@ -3,7 +3,7 @@ application: "telnet"
 enable: true
 # 监听地址
 host: "0.0.0.0"
-# 监听端口
+# 监听端口（标准 telnet 端口 23）
 port: 23
 
 # telnet config
@@ -23,6 +23,9 @@ motd: |
   Login authentication
  
 prompt: "$ "
+# 账号口令：配了才校验（用户名+口令完全匹配）。
+# 注意与 ftp/smtp 相反——accounts 留空时永远认证失败（4 次后断开），
+# 但每次尝试的用户名/口令都会落事件。
 accounts: 
   - username: "root"
     password: "123456"

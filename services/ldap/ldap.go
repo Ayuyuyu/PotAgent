@@ -1,5 +1,22 @@
 package ldap
 
+/*
+LDAP 蜜罐服务（TCP 389，LDAPv3，RFC 4511 ASN.1 BER）。
+
+低交互策略：
+  - readTLVReader 按 BER 长度帧切分，连接级多请求；解析 bindRequest（Simple/SASL/匿名）、
+    searchRequest（base/scope/filter/attributes，过滤器递归解码为可读字符串）、unbind、
+    abandon、extended（取 OID，如 StartTLS）。
+  - Bind 一律回 success，不校验口令：simple 口令原文落事件，SASL 记 mechanism，
+    匿名绑定也回 success。
+  - 不存真取：Search 回一条诱饵条目（fake_entry 可配，默认 objectClass/cn/sn/uid/mail/
+    userPassword{SSHA}）+ SearchResultDone；modify/add/del/modDN/compare 一律回 success。
+  - 非 0x30 或解析失败直接断开；无对应响应的 op 也落 ldap-request。
+  - 事件 ldap-bind / ldap-search / ldap-unbind / ldap-abandon / ldap-extended / ldap-request，
+    字段含 message_id/op/raw/bind_version/dn/auth_type/password/sasl_mechanism/base/scope/
+    filter/attributes/oid。
+*/
+
 import (
 	"bufio"
 	"context"
@@ -15,9 +32,6 @@ import (
 	"potAgent/services"
 )
 
-// LDAP 低交互蜜罐：监听 TCP 389，解析 ASN.1 BER 编码的 LDAPMessage，
-// 对 Bind(Simple/SASL/匿名) 一律回 success、对 Search 回一份诱饵条目 + SearchResultDone，
-// 并捕获 DN/口令/过滤器等凭据情报（扫描器常用弱口令或匿名绑定枚举目录）。
 var _ = services.Register("ldap", LDAPServiceInit)
 
 func LDAPServiceInit() services.Service {

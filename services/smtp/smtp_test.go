@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"potAgent/common"
 	"potAgent/global"
 	"potAgent/services"
 )
@@ -151,7 +152,7 @@ func TestStarttlsUpgrade(t *testing.T) {
 	if line, _ := r.ReadString('\n'); !strings.HasPrefix(line, "220 ") {
 		t.Fatalf("starttls reply: %q", line)
 	}
-	tlsConn := tls.Client(c, &tls.Config{InsecureSkipVerify: true})
+	tlsConn := tls.Client(c, common.NewInsecureClientConfig())
 	if err := tlsConn.Handshake(); err != nil {
 		t.Fatalf("tls handshake: %v", err)
 	}

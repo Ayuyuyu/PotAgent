@@ -3,7 +3,7 @@ application: "ssh"
 enable: true
 # 监听地址
 host: "0.0.0.0"
-# 监听端口
+# 监听端口（SSH 标准 22，此处 2222 避免与宿主 sshd 冲突）
 port: 2222
 
 # ssh config
@@ -19,7 +19,10 @@ motd: |
 
   Last login: Sun Mar 19 19:40:44 2025 from 172.16.84.1
 
+# 最多允许几次认证尝试
 max_auth_tries: 3
+# 账号口令：配了才校验（用户名+口令完全匹配）；用户名写 "*" 表示通配任意账号。
+# 注意与 ftp/smtp 相反——accounts 留空时所有口令认证都会失败（凭据仍全部落事件）。
 accounts: 
   - username: "root"
     password: "123456"

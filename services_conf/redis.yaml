@@ -3,6 +3,7 @@ application: "redis"
 enable: true
 # 监听地址
 host: "0.0.0.0"
+# 监听端口（标准 redis 端口 6379）
 port: 6379
 
 # 留空（或不配置）则使用内置默认 fakeRedisInfo；可自定义以伪装成特定版本/环境。

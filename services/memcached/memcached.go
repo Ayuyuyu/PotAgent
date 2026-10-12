@@ -8,7 +8,7 @@ Memcached 蜜罐服务（TCP 11211，文本协议）。
   - 共享内存 store 真实存储 key→(value,flags,cas,exptime)，同一实例多连接读写同一份空间，
     模拟真实 memcached 的全局缓存，get/set/gets/delete/incr/decr/touch 行为自洽。
   - 高危/写操作（set/add/replace/append/prepend/cas/delete/flush_all）照常回 STORED/DELETED/OK，
-    并把 key 与上传的 value 落进事件，便于还原攻击链（payload 上传是核心情报）。
+    并把 key 与上传的 value 落进事件，便于还原攻击链。
   - version / stats 返回仿真的版本与统计，增强指纹一致性。
   - 未知命令回 ERROR\r\n（宽容，避免利用工具因报错中断，命令已被事件捕获）。
 */

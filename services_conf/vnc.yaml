@@ -6,7 +6,8 @@ host: "0.0.0.0"
 # 监听端口
 port: 5901
 
-# 可选字段
+# 注意：这不是 RFB 协议版本（协议版本固定为 RFB 003.008），而是 ServerInit 阶段
+# 回给客户端的桌面名称，会显示在 VNC 客户端的标题栏里。
 version: "VNC"
 # VNC连接后显示的图像
 img_path: "./services_conf/assets/vnc/vnc.png"

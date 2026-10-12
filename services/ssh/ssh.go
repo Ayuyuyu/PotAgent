@@ -1,5 +1,25 @@
 package ssh
 
+/*
+SSH 蜜罐服务（TCP，SSH-2，RFC 4253，基于 golang.org/x/crypto/ssh）。
+
+低交互策略：
+  - 用真实 SSH 库做传输层与握手，ServerVersion、MaxAuthTries（默认 3）可配；
+    每次启动生成新 RSA-2048 host key。
+  - PublicKeyCallback 永远返回 unknown key（拒绝公钥认证，只记录类型与 Marshal hex）；
+    PasswordCallback 配了 accounts 才校验（用户名 * 则任意可登录），accounts 为空时所有
+    口令认证都失败——但凭据全部落事件（与 ftp/smtp 的「空配置=全通过」相反）。
+  - session channel 后进交互 shell（MOTD 可配）：simulator 命中回配置内容，未命中回
+    command not found；exec 请求同样回 command not found 并 exit-status 0；
+    forwarded-tcpip/direct-tcpip 解析 ExtraData 记录目标主机/端口后 Reject（禁止端口转发）。
+  - 未知 channel type 记 ssh-channel 后 Reject；未知 request type 记 ssh-request；
+    握手失败记 ssh-connect-failed（含 error）。
+  - 事件 ssh-publickey-authentication / ssh-password-authentication / ssh-connect-failed /
+    ssh-channel / ssh-request / ssh-shell / ssh-exec，字段含 username/password/
+    publickey-type/publickey/session-id/channel-type/request-type/exec/env/subsystem、
+    forwarded-tcpip/direct-tcpip 的 address/port/originator 等。
+*/
+
 import (
 	"context"
 	"encoding/hex"

@@ -10,7 +10,7 @@ port: 53
 default_a: "10.0.0.1"
 default_aaaa: "fd00:1234::1"
 
-# 针对特定查询名的预置应答
+# 针对特定查询名的预置应答（目前仅 A / AAAA 两种类型能编码进响应）
 answers:
   - name: "intranet.example.com"
     type: "A"

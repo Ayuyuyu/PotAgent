@@ -1,5 +1,20 @@
 package vnc
 
+/*
+VNC 蜜罐服务（TCP 5900/5901，RFB 3.3 / 3.7 / 3.8）。
+
+低交互策略：
+  - 服务端主动发 RFB 003.008 并校验客户端版本；RFB>=3.7 只通告一种安全类型 1（None）
+    且客户端必须选 1，否则断开；3.8 回 SecurityResult OK。
+  - ServerInit 固定 16bpp true-colour，宽高取自加载的 PNG；命令循环处理
+    SetPixelFormat/SetEncodings/FramebufferUpdateRequest/PointerEvent/KeyEvent，
+    其余命令直接断开；桌面帧按 30fps 从 PNG 推 FramebufferUpdate（Raw/CopyRect）。
+  - 无认证——只支持 authNone，永远"成功"（与真实 VNC 的 VNC Auth 最大差异，
+    目的是让攻击工具直接进入以捕获键鼠）。
+  - 不支持的客户端命令/安全类型直接断开。
+  - 事件目前只有 vnc-connect（protocol/application）；键鼠输入尚未落盘。
+*/
+
 import (
 	"context"
 	"fmt"

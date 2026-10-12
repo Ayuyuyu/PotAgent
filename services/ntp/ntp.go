@@ -1,5 +1,17 @@
 package ntp
 
+/*
+NTP 蜜罐服务（UDP 123，RFC 5905/4330）。ntp 与 sntp 共用本实现：
+SNTP 是 NTP 的简化子集，同为 48 字节报文，仅由 yaml 的 protocol 决定事件分类。
+
+低交互策略：
+  - 取首字节 LI/VN/Mode，构造 48 字节 server 响应：LI=0、VN=客户端版本（缺省 4）、Mode=4、
+    stratum（默认 2，可配）、poll=10、precision=0xEC、ref_id（默认 LOCL），
+    Reference/Receive/Transmit 填当前时间，Originate 回显客户端 Transmit。
+  - 请求不足 48 字节也照常回合法响应（宽容，尽量应答）；无存储、无状态机。
+  - 事件 ntp-request / sntp-request 含 version/mode 与 raw(hex)。
+*/
+
 import (
 	"context"
 	"encoding/binary"
@@ -13,8 +25,6 @@ import (
 	"potAgent/services"
 )
 
-// ntp 与 sntp 在线格式完全一致（SNTP 即 NTP 的简化子集，均用 UDP 123、同样的 48 字节报文），
-// 故共用同一实现，仅由 yaml 的 protocol 决定事件分类（event_category = "ntp"/"sntp"）。
 var (
 	_ = services.Register("ntp", NTPServiceInit)
 	_ = services.Register("sntp", NTPServiceInit)

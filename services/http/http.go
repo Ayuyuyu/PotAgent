@@ -1,7 +1,16 @@
 package http
 
 /*
-HTTP 服务自定义响应处理
+HTTP 蜜罐服务（TCP，HTTP/1.x）。http 与 https 复用同一处理逻辑，
+是否走 TLS 由 tls 块驱动。
+
+低交互策略：
+  - 用标准库解析请求行/首部（body 只读 1024 字节），响应三级优先：
+    request_simulator（yaml 配 uri+method）→ assets_dir 静态资源（仅 GET）→ 404。
+  - 证书文件优先加载，缺失则自动生成自签证书（common.LoadOrGenCert）；
+    未配 tls 块即明文 HTTP。
+  - 无登录/认证仿真；未命中资源回 404，请求解析失败或 EOF 直接断开。
+  - 事件 http-access 含 method/host/url/request_headers/request_body。
 */
 import (
 	"bufio"
@@ -66,16 +75,19 @@ func httpHandle(ctx context.Context, service *services.Service) {
 	)
 	logger.Log.Debugln(serviceOptions, baseOptions)
 
-	// 可选 TLS(HTTPS)：配置了 cert_file 则以 TLS 方式握手，证书只加载一次
+	// 可选 TLS(HTTPS)：配置了 tls 块则以 TLS 方式握手，证书只加载一次。
+	// 证书优先从文件加载，文件不存在则回退自动生成自签证书（common.LoadOrGenCert）。
 	var tlsConf *tls.Config
-	if serviceOptions.Tls.CertFile != "" {
-		certFile := resolvePathRelativeToCwd(serviceOptions.Tls.CertFile)
-		keyFile := resolvePathRelativeToCwd(serviceOptions.Tls.KeyFile)
-		cert, err := tls.LoadX509KeyPair(certFile, keyFile)
+	if serviceOptions.Tls.CertFile != "" || serviceOptions.Tls.KeyFile != "" {
+		cert, err := common.LoadOrGenCert(
+			resolvePathRelativeToCwd(serviceOptions.Tls.CertFile),
+			resolvePathRelativeToCwd(serviceOptions.Tls.KeyFile),
+			baseOptions.Application,
+		)
 		if err != nil {
-			logger.Log.Fatalf("加载 TLS 证书失败: %v", err)
+			logger.Log.Fatalf("加载/生成 TLS 证书失败: %v", err)
 		}
-		tlsConf = &tls.Config{Certificates: []tls.Certificate{cert}}
+		tlsConf = common.NewServerTLSConfig(cert)
 	}
 
 	// 监听

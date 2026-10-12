@@ -1,18 +1,35 @@
 package ftp
 
+/*
+FTP / FTPS 蜜罐服务（TCP 21 / 990，RFC 959；FTPS = RFC 4217）。
+ftp 与 ftps 共用本实现，由 yaml 的 mode 决定传输层行为。
+
+低交互策略：
+  - mode "" / "ftp" = 明文；"ftps" = 显式 AUTH TLS 升级（preReadConn 把 bufio 预读的
+    ClientHello 桥接给 tls.Server，避免握手字节丢失）；"ftps-implicit" = 连接即 TLS。
+    证书文件优先加载，缺失则自动生成自签证书（common.LoadOrGenCert）。
+  - PROT P 时数据通道同样走 TLS（PASV 侧 tls.Server、PORT 侧 tls.Client）。
+  - 命令集覆盖 USER/PASS/ACCT/SYST/FEAT/OPTS/PWD/CWD/CDUP/TYPE/NOOP/PASV/EPSV/PORT/EPRT/
+    LIST/NLST/RETR/STOR/APPE/SIZE/REST/DELE/MKD/RMD/RNFR/RNTO/AUTH/PBSZ/PROT/CCC/QUIT。
+  - 部分真存真取：配 share_dir 后 LIST 根列真实条目（子目录只回空目录，防泄露）、RETR 命中回
+    真实文件内容否则回固定 dummy、CWD 仅限 share_dir 内真实目录；STOR 只记字节数不落盘。
+    未配 share_dir 则用内置伪目录树。
+  - accounts 为空时接受任意账号口令（蜜罐默认，全部落事件）；配了才校验，支持用户名 * 通配。
+    PASS 无论成败都落 ftp-login（含 accepted）；DELE/MKD/RMD/RNFR/RNTO 一律回成功并落 ftp-data。
+  - 未知命令回 500 Unknown command；数据通道失败回 425；PORT/EPRT 语法错回 501；空闲超时断开。
+  - 事件前缀取 BaseOptions.Protocol（ftp/ftps）：ftp-connect / ftp-command / ftp-login /
+    ftp-data / ftp-close，字段含 mode/session/command/username/password/accepted/op/target。
+  - 核心情报：爆破凭证 + 上传/下载的路径与内容（payload 投递、配置外泄）。
+*/
+
 import (
 	"bufio"
 	"bytes"
 	"context"
-	"crypto/rand"
-	"crypto/rsa"
 	"crypto/tls"
-	"crypto/x509"
-	"crypto/x509/pkix"
 	"errors"
 	"fmt"
 	"io"
-	"math/big"
 	"net"
 	"os"
 	"path/filepath"
@@ -178,12 +195,12 @@ func handleServiceConn(conn net.Conn, service *services.Service, cfg ftpConfig) 
 	}
 
 	if cfg.isTLS() {
-		pair, err := loadOrGenCert(cfg.CertFile, cfg.KeyFile, firstNonEmpty(cfg.Hostname, "PotAgent-FTP"))
+		pair, err := common.LoadOrGenCert(cfg.CertFile, cfg.KeyFile, firstNonEmpty(cfg.Hostname, "PotAgent-FTP"))
 		if err != nil {
 			logger.Log.Errorf("%s 加载/生成 FTPS 证书失败: %v", cat, err)
 			return
 		}
-		s.tlsCfg = &tls.Config{Certificates: []tls.Certificate{pair}, MinVersion: tls.VersionTLS12}
+		s.tlsCfg = common.NewServerTLSConfig(pair)
 		if cfg.isImplicit() {
 			tlsConn := tls.Server(conn, s.tlsCfg)
 			if err := tlsConn.Handshake(); err != nil {
@@ -521,7 +538,7 @@ func (s *ftpSession) wrapDataTLS(conn net.Conn, client bool) (net.Conn, error) {
 	}
 	var tlsConn *tls.Conn
 	if client {
-		tlsConn = tls.Client(conn, &tls.Config{InsecureSkipVerify: true})
+		tlsConn = tls.Client(conn, common.NewInsecureClientConfig())
 	} else {
 		tlsConn = tls.Server(conn, s.tlsCfg)
 	}
@@ -850,36 +867,4 @@ func localIP() string {
 		return a.IP.String()
 	}
 	return "0.0.0.0"
-}
-
-// loadOrGenCert 加载或生成自签证书（仅含 CN + DNS SAN=hostname 的"标准"自签证书）。
-func loadOrGenCert(certFile, keyFile, hostname string) (tls.Certificate, error) {
-	if certFile != "" && keyFile != "" {
-		if pair, err := tls.LoadX509KeyPair(certFile, keyFile); err == nil {
-			return pair, nil
-		} else if !os.IsNotExist(err) {
-			return tls.Certificate{}, err
-		}
-	}
-	key, err := rsa.GenerateKey(rand.Reader, 2048)
-	if err != nil {
-		return tls.Certificate{}, err
-	}
-	tpl := &x509.Certificate{
-		SerialNumber:          big.NewInt(time.Now().UnixNano()),
-		Subject:               pkix.Name{CommonName: hostname, Organization: []string{"PotAgent"}},
-		NotBefore:             time.Now().Add(-time.Hour),
-		NotAfter:              time.Now().AddDate(10, 0, 0),
-		KeyUsage:              x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
-		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
-		BasicConstraintsValid: true,
-		DNSNames:              []string{hostname},
-	}
-	der, err := x509.CreateCertificate(rand.Reader, tpl, tpl, &key.PublicKey, key)
-	if err != nil {
-		return tls.Certificate{}, err
-	}
-	pair := tls.Certificate{Certificate: [][]byte{der}, PrivateKey: key}
-	pair.Leaf, _ = x509.ParseCertificate(der)
-	return pair, nil
 }

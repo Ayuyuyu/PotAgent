@@ -7,8 +7,7 @@ SMTP 蜜罐服务（TCP，RFC 5321 文本协议）。
   - 服务端在连接建立时回 220 欢迎语，连接级循环读取命令（行尾 \r\n）。
   - 主要仿真 EHLO/HELO/MAIL/RCPT/DATA/RSET/NOOP/VRFY/QUIT，并支持 AUTH LOGIN/PLAIN
     （不校验口令，永远回 235 成功），把上送的用户名/口令原样落进事件，便于还原爆破攻击链。
-  - DATA 完整接收邮件正文（含 dot-stuffing 还原），把 from/to/subject/全文落进 smtp-mail 事件，
-    攻击投递的钓鱼/恶意载荷是核心情报。
+  - DATA 完整接收邮件正文（含 dot-stuffing 还原），把 from/to/subject/全文落进 smtp-mail 事件
   - STARTTLS（需配置 cert_file/key_file，或自动生成自签证书）将明文连接升级为 TLS，
     升级后继续同一命令循环；未配置证书时 STARTTLS 回 502。
 
@@ -334,7 +333,7 @@ func Serve(conn net.Conn, service *services.Service, prefix string, allowStartTL
 				n, _ := reader.Read(tmp)
 				bridge.buf.Write(tmp[:n])
 			}
-			tlsConn := tls.Server(bridge, &tls.Config{Certificates: []tls.Certificate{cert}, MinVersion: tls.VersionTLS12})
+			tlsConn := tls.Server(bridge, common.NewServerTLSConfig(cert))
 			if herr := tlsConn.Handshake(); herr != nil {
 				logger.Log.Debug(prefix, " STARTTLS handshake error:", herr)
 				pushClose()

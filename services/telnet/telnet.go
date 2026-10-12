@@ -1,5 +1,19 @@
 package telnet
 
+/*
+Telnet 蜜罐服务（TCP 23，telnet 文本协议；实现为行交互，不做 IAC 选项协商）。
+
+低交互策略：
+  - 每连接一个 Terminal（prompt/MOTD 可配，ReadPassword 关闭回显）；登录循环最多 4 次，
+    成功后进入命令循环：命中 simulator 回配置内容，空行忽略，quit 退出，其余回
+    command not found，结束回 Goodbye!。无存储。
+  - 校验配置的 accounts（用户名+口令完全匹配）；accounts 为空时永远认证失败（4 次后断开），
+    但每次尝试的用户名/口令都落事件（与 ftp/smtp 的「空配置=全通过」相反）。
+  - 未知命令回 command not found 且不断开（宽容）。
+  - 事件 telnet-connect / telnet-password-authentication / telnet-command / telnet-close，
+    字段含 session-id(xid)/username/password/command。
+*/
+
 import (
 	"context"
 	"fmt"

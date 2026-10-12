@@ -1,12 +1,13 @@
 protocol: "snmp" #固定字段
 application: "snmp"
 enable: true
-# 版本支持：仅 SNMPv1 与 SNMPv2c（二者共享 community 字符串的线格式，已支持
-# Get/GetNext/Set/GetBulk 的 GET-RESPONSE 回应）。
 # 监听地址
 host: "0.0.0.0"
-# 监听端口（标准 SNMP 端口 161；<1024 需 root 启动）
+# 监听端口（标准 SNMP 端口 161）
 port: 161
+
+# 版本支持：仅 SNMPv1 与 SNMPv2c（二者共享 community 字符串的线格式，已支持
+# Get/GetNext/Set/GetBulk 的 GET-RESPONSE 回应），不支持 v3。
 
 # 伪 MIB 系统组返回值（GET 常见 OID 时回应的设备信息）
 sys_descr: "PotAgent Network Device"

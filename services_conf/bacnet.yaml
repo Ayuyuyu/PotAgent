@@ -1,6 +1,6 @@
 protocol: "bacnet" #固定字段
 application: "bacnet-ip"
-# 默认关闭：47808 是 BACnet/IP 标准端口；测试时改成 enable: true + 大端口（如 47809）
+# 47808 是 BACnet/IP 标准端口
 enable: true
 # 监听地址（BACnet/IP 走 UDP）
 host: "0.0.0.0"

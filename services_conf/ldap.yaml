@@ -3,7 +3,7 @@ application: "ldap"
 enable: true
 # 监听地址
 host: "0.0.0.0"
-# 监听端口（标准 LDAP 端口 389；<1024 需 root 启动）
+# 监听端口（标准 LDAP 端口 389）
 port: 389
 
 # 伪目录基准 DN（Search 回应里的诱饵条目以此为基础构造，如 cn=admin,<base_dn>）

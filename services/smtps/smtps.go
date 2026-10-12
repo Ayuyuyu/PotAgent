@@ -66,10 +66,7 @@ func smtpsHandle(ctx context.Context, service *services.Service) {
 					logger.Log.Error(serviceName, " load cert error:", cerr)
 					return
 				}
-				tlsConn := tls.Server(c, &tls.Config{
-					Certificates: []tls.Certificate{cert},
-					MinVersion:   tls.VersionTLS12,
-				})
+				tlsConn := tls.Server(c, common.NewServerTLSConfig(cert))
 				if herr := tlsConn.Handshake(); herr != nil {
 					logger.Log.Debug(serviceName, " handshake error:", herr)
 					return

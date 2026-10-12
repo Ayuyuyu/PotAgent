@@ -1,5 +1,15 @@
 package smb
 
+/*
+SMB 蜜罐服务（TCP 445，SMB1 / SMB2 / SMB3）。
+
+低交互策略：
+  - 只读首 4 字节识别版本（0xFF 'S' 'M' 'B' = SMB1；"FIP\0" = SMB2+），回一个 64 字节
+    最小 SMB2 NEGOTIATE 响应头；客户端 2 秒内继续发包则记一次 smb-data 后关闭。
+  - 不实现完整协议、无会话、无存储；版本 unknown 也照常回最小响应，读超时即关闭。
+  - 事件 smb-connect / smb-negotiate / smb-data，字段含 version/raw-head(hex)/bytes/raw。
+*/
+
 import (
 	"bufio"
 	"context"

@@ -44,3 +44,18 @@ func LoadOrGenCert(certFile, keyFile, hostname string) (tls.Certificate, error) 
 	pair.Leaf, _ = x509.ParseCertificate(der)
 	return pair, nil
 }
+
+// NewServerTLSConfig 构造服务端 TLS 配置：使用给定证书，最低 TLS1.2。
+// 适用于 smtp STARTTLS、smtps 隐式 TLS、ftp AUTH TLS / 隐式 TLS 的服务端握手。
+func NewServerTLSConfig(cert tls.Certificate) *tls.Config {
+	return &tls.Config{
+		Certificates: []tls.Certificate{cert},
+		MinVersion:   tls.VersionTLS12,
+	}
+}
+
+// NewInsecureClientConfig 构造跳过证书校验的客户端 TLS 配置。
+// 仅用于客户端侧连接蜜罐（ftp 主动模式回连、单测校验自签证书），生产服务端勿用。
+func NewInsecureClientConfig() *tls.Config {
+	return &tls.Config{InsecureSkipVerify: true}
+}

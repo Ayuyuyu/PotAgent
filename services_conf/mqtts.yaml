@@ -1,6 +1,5 @@
 protocol: "mqtts" #固定字段（MQTT over TLS，必须配置 tls 块）
 application: "mqtt-broker-tls"
-# 默认关闭：8883 是 MQTT/TLS 标准端口；测试时改成 enable: true + 大端口（如 18883）
 enable: false
 # 监听地址
 host: "0.0.0.0"
@@ -19,7 +18,7 @@ topics:
 retain_all: false
 read_only: false
 # store_file: "./data/mqtts-store.json"
-# mqtts 必须配置证书（仓库自带的测试用自签证书，也可换成正式证书）
+# mqtts 必须配置证书（不配则启动报错）；优先加载文件，文件不存在时自动生成自签证书
 tls:
   cert_file: "./services_conf/https/cert.pem"
   key_file: "./services_conf/https/key.pem"

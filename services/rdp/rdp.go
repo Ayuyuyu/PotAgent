@@ -1,14 +1,26 @@
-// Package rdp 是一个低交互 RDP 蜜罐：按 MS-RDPBCGR 严格走完连接序列，
-// 支持标准 RDP 安全 / TLS / NLA(CredSSP) 三种协商，能把一张 PNG 当桌面推给客户端，
-// 并记录键鼠输入。
-//
-//   - RDP 必须按序走完 X.224 → MCS/GCC → 安全交换 → Client Info → Licensing →
-//     Demand Active/Confirm Active → Synchronize/Control/Font Map 才能到达位图更新；
-//     本包做到了同样的"静态桌面 + 键鼠记录"，代价是代码量高一个数量级。
-//   - RDP 多出来的东西是凭据：标准 RDP 安全/TLS 下 Client Info 里的口令是用服务器
-//     RSA 公钥加密的，我们持有私钥即可还原**明文口令**；NLA 下能拿到
-//     **NetNTLMv2 响应**（hashcat -m 5600 或中继）。
 package rdp
+
+/*
+RDP 蜜罐服务（TCP 3389，MS-RDPBCGR）。
+
+低交互策略：
+  - 按序走完 X.224 → MCS/GCC → 安全交换 → Client Info → Licensing →
+    Demand Active/Confirm Active → Synchronize/Control/Font Map 才能到达位图更新；
+    本包做到同样的"静态桌面 + 键鼠记录"，代价是代码量高一个数量级。
+  - 支持标准 RDP 安全 / TLS / NLA(CredSSP) 三种协商（security 配置 negotiate / rdp / tls /
+    hybrid），能把一张 PNG 当桌面按 30fps 推给客户端，并记录键鼠输入。
+  - 标准 RDP 安全用服务器专有证书做 512 位 RSA（Go crypto/rsa 拒绝 <1024，故用 math/big 生成），
+    deriveStandardKeys 派生双向 RC4 密钥，decryptPDU 跳过签名校验防伪造签名 DoS。
+  - RDP 多出来的是凭据：标准/TLS 路径下 Client Info 口令用服务器 RSA 公钥加密，持私钥即可
+    还原明文口令（log_password 控制是否落事件）；NLA 路径下拿 NetNTLMv2 响应
+    （hashcat -m 5600 或中继），cookie 里的 mstshash=用户名同样是情报。
+  - 不校验任何口令；协商失败回 Negotiate Failure；会话 panic 兜底成 rdp-error；
+    单阶段 30s 读超时、空闲 15 分钟断开、会话最长 4 小时。
+  - 事件 rdp-connect / rdp-negotiation / rdp-login / rdp-session / rdp-input /
+    rdp-disconnect / rdp-error，字段含 requested_protocols/selected_protocol/cookie、
+    auth/domain/user/password/password_source/ntlm_response/server_challenge/hashcat、
+    desktop/bpp/fastpath、keystrokes/mouse、stage/reason。
+*/
 
 import (
 	"context"

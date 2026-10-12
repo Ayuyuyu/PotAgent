@@ -1,5 +1,19 @@
 package snmp
 
+/*
+SNMP 蜜罐服务（UDP 161，SNMPv1/v2c，ASN.1 BER）。
+
+低交互策略：
+  - 解析 SEQUENCE{version, community, PDU}，提取 request-id、error-status/index 与
+    varbind 中的 OID 列表；只对查询/写入类 PDU 回 GET-RESPONSE(0xA2)（Get 0xA0 /
+    GetNext 0xA1 / Set 0xA3 / GetBulk 0xA5），Trap/Inform(0xA4/0xA6/0xA7) 不回。
+  - 不校验 community，任何 community 都照常应答（community 本身就是情报）。
+  - MIB 回 sysDescr/sysObjectID/sysUpTime/sysContact/sysName/sysLocation/sysServices，
+    未知 OID 回通用字符串 "PotAgent"；解析失败只落事件不回包。
+  - 事件 snmp-request 含 raw(hex)/version/community/pdu_type/oids。
+  - 核心情报：community 字符串（public/弱口令）与被枚举的 OID 指纹（设备型号、网络拓扑）。
+*/
+
 import (
 	"context"
 	"encoding/binary"
@@ -15,9 +29,6 @@ import (
 	"potAgent/services"
 )
 
-// SNMP 低交互蜜罐：监听 UDP 161，解析 SNMPv1/v2c 报文（ASN.1 BER），
-// 对 GetRequest/GetNextRequest/SetRequest/GetBulk 回一份“像真设备”的 GET-RESPONSE，
-// 并记录 community 字符串与请求 OID（扫描者常用 public/弱 community 枚举，属高价值情报）。
 var _ = services.Register("snmp", SNMPServiceInit)
 
 var startTime = time.Now()

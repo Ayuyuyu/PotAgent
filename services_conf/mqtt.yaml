@@ -1,6 +1,5 @@
 protocol: "mqtt" #固定字段
 application: "mqtt-broker"
-# 默认关闭：1883 是 MQTT 标准端口；测试时改成 enable: true + 大端口（如 11883）
 enable: true
 # 监听地址
 host: "0.0.0.0"
@@ -35,7 +34,8 @@ retain_all: false
 read_only: false
 # 可选：主题数据持久化文件（JSON 快照，重启后订阅还能读到上次发布的值）
 # store_file: "./data/mqtt-store.json"
-# 可选 TLS（同目录下另有一份 protocol: "mqtts" 的示例）
+# 可选 TLS（同目录下另有一份 protocol: "mqtts" 的示例）；配了 cert_file 即启用，
+# 证书文件不存在时自动生成自签证书
 # tls:
 #   cert_file: "./services_conf/https/cert.pem"
 #   key_file: "./services_conf/https/key.pem"

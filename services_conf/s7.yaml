@@ -1,7 +1,6 @@
 protocol: "s7" #固定字段
 application: "siemens-s7"
-# 默认关闭：102 是特权端口，需要 root 才能监听；
-# 测试时改成 enable: true + 大端口（如 1102）
+# 102 是特权端口（<1024）
 enable: true
 # 监听地址
 host: "0.0.0.0"

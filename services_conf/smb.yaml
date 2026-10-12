@@ -7,7 +7,8 @@ host: "0.0.0.0"
 port: 445
 
 # smb config
-# 对外声称的 SMB 版本
+# 注意：version / server_name 是保留字段，当前实现（只读首 4 字节识别版本 + 回一个最小
+# SMB2 NEGOTIATE 响应头）尚未使用它们；事件里的 smb.version 来自实际抓到的报文头，
+# 不是这里配置的值。要伪造版本/服务器名需要先改代码。
 version: "SMB3"
-# 响应中携带的服务器名称
-server_name: "POTAGENT"
+# server_name: "POTAGENT"
