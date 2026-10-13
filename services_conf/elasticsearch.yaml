@@ -1,0 +1,30 @@
+protocol: "elasticsearch" #固定字段
+application: "elasticsearch"
+enable: true
+# 监听地址
+host: "0.0.0.0"
+# 监听端口（Elasticsearch REST API 标准端口 9200）
+port: 9200
+
+# 集群身份信息：GET / 、_cluster/health、_nodes 等响应里回这些值，用于伪造指纹。
+# 各项留空则用内置默认（elasticsearch / node-1 / 8.11.1 / You Know, for Search）。
+# 注意：version 会连带决定 version.number、lucene_version、build_date、
+# minimum_wire/index_compatibility_version 与 index.settings.version.created，
+# 改这一个值即可整体换版本。附属字段按「档案表(6/7/8/9) > 不变量推导」取得，
+# 表里没有的新大版本也能自动给出配套值；要精确伪装某个具体构建再用下面的覆盖字段。
+cluster_name: "elasticsearch"
+node_name: "node-1"
+version: "8.11.1"
+tagline: "You Know, for Search"
+
+# 版本档案覆盖项（一般不用配）：不填则按 version 的大版本查档案表/按不变量推导。
+# lucene_version: "10.1.0"
+# build_date: "2025-04-15T09:32:11.831021935Z"
+# minimum_wire_compatibility_version: "8.18.0"
+# minimum_index_compatibility_version: "8.0.0"
+
+# 预置索引：启动即存在，_cat/indices 与 _search 能看到（每个填 3 条诱饵文档）。
+# 注意：攻击者自己 PUT 建的索引是空的，与真实 ES 行为一致，也不会和它的文档 id 撞上。
+indices:
+  - "customer"
+  - "orders"

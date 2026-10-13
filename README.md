@@ -32,7 +32,7 @@ PotAgent 使用golang完成开发。PotAgent在好几年前就已经完成，现
 - [] mysql
 - [] postgresql
 - [] mongodb
-- [] elasticsearch
+- [x] elasticsearch
 - [x] IIoT 系列（工业物联网 · 工控 OT）：modbus-tcp / s7 / cip / fins / mitsubishi a1e+qna3e / bacnet
 - [x] IIoT 系列（工业物联网 · 消息协议）：mqtt（含 mqtts / TLS）
 
