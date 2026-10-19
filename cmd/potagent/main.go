@@ -13,6 +13,7 @@ import (
 	_ "potAgent/services/iiot"
 	_ "potAgent/services/ldap"
 	_ "potAgent/services/memcached"
+	_ "potAgent/services/mysql"
 	_ "potAgent/services/ntp"
 	_ "potAgent/services/rdp"
 	_ "potAgent/services/redis"

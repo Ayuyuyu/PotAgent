@@ -29,7 +29,7 @@ PotAgent 使用golang完成开发。PotAgent在好几年前就已经完成，现
 - [x] tftp
 - [x] redis
 - [x] memcached
-- [] mysql
+- [x] mysql
 - [] postgresql
 - [] mongodb
 - [x] elasticsearch
