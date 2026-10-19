@@ -20,6 +20,8 @@ type OptionsOutputs struct {
 type Options struct {
 	// 服务配置所在的目录
 	ServicesDir string `mapstructure:"services_dir"`
+	// 日志等级（debug/info/warn/error），留空沿用编译期设定或默认 info
+	LogLevel string `mapstructure:"log_level"`
 	// 数据推送参数
 	Outputs OptionsOutputs `mapstructure:"outputs"`
 }

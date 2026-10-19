@@ -59,8 +59,14 @@ go build -o PotAgent ./cmd/potagent
 │  ├─https/         # HTTPS 自签证书 cert.pem / key.pem（测试用）
 │  └─assets/        # 各协议静态资源，由 assets.zip 启动时解压
 ├─PotAgent          # 主程序
-└─pot.yaml          # 程序配置文件（services_dir / outputs）
+└─pot.yaml          # 程序配置文件（services_dir / outputs / log_level）
 ```
+**配置文件（pot.yaml）**  
+顶层字段：  
+- `services_dir`：服务实例配置所在目录（默认 `./services_conf`）。  
+- `log_level`：日志等级，可选 `debug` / `info` / `warn` / `error`，留空默认 `info`（`debug` 会打印调用位置）。  
+- `outputs`：事件输出，`file`（写本地文件）与 `kafka`（推送）可单独或同时开启。  
+
 **执行**  
 默认读取程序目录的配置文件，也可以进行配置目录进行更改。
 ```
@@ -83,6 +89,7 @@ COMMANDS:
 GLOBAL OPTIONS:
    --config FILE  Load configuration from FILE (default: "pot.yaml")
    --data DIR     Store data in DIR (default: "~/.potAgent")
+   --protocol value, -p value   Only start specified protocol(s), comma-separated (e.g. mysql,redis); empty starts all under services_dir
    --help, -h     show help
 ```
 

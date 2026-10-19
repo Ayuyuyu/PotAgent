@@ -47,6 +47,12 @@ var cliFlags = []cli.Flag{
 		Value: "~/.potAgent",
 		Usage: "Store data in `DIR`",
 	},
+	&cli.StringFlag{
+		Name:    "protocol",
+		Aliases: []string{"p"},
+		Value:   "",
+		Usage:   "Only start specified protocol(s), comma-separated (e.g. mysql,redis); empty starts all under services_dir",
+	},
 }
 
 func runServe(c *cli.Context) error {
@@ -64,7 +70,7 @@ func runServe(c *cli.Context) error {
 		return cli.Exit("No configuration file found! Check your config (-c).", 1)
 	}
 	//
-	imp.InitServicesRun(c.String("config"))
+	imp.InitServicesRun(c.String("config"), c.String("protocol"))
 
 	//ctx, cancel := context.WithCancel(context.Background())
 

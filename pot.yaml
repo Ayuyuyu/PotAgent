@@ -1,5 +1,8 @@
 services_dir: "./services_conf"
 
+# 日志等级：debug / info / warn / error（留空默认 info，debug 会打印调用位置）
+log_level: "info"
+
 # 事件数据的输出推送
 outputs:
   # 写入到本地的文件
