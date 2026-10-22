@@ -1,0 +1,119 @@
+protocol: "docker-api"
+application: "docker-api"
+enable: true
+host: "0.0.0.0"
+# Docker Engine API 默认明文 HTTP 端口 2375（TLS 为 2376）。
+# 测试可以使用export DOCKER_HOST=tcp://127.0.0.1:2375 后使用docker命令去执行操作
+port: 2375
+
+# ============================================================
+# 一、版本指纹（/version 与 /info 联动；留空均取下方注释里的默认值）
+# ============================================================
+# api_version: "1.45"
+# version: "26.1.3"
+# min_api_version: "1.24"
+# experimental: false
+
+# 内核版本：/version 的 Components[Engine].Details 与 /info 共用（默认 5.4.0-216-generic）。
+# kernel_version: "5.4.0-216-generic"
+
+# 引擎构建信息：/version 的 GoVersion、containerd/runc/docker-init 组件版本、
+# BuildTime（默认 go1.22.2 / 1.7.24 / 1.1.12 / 0.19.0 / 2024-10-14T22:06:01+00:00）。
+# GitCommit 由 version 自动推导（<version>-0ubuntu1~20.04.1），无需配置。
+# go_version: "go1.22.2"
+# containerd_version: "1.7.24"
+# runc_version: "1.1.12"
+# docker_init_version: "0.19.0"
+# build_time: "2024-10-14T22:06:01.000000000+00:00"
+
+# ============================================================
+# 二、主机身份与资源（/info；建议改成与目标主机一致，避免一眼假）
+# ============================================================
+# hostname: "docker-host"
+# operating_system: "Ubuntu 22.04.3 LTS"
+# os_version: "22.04"
+# architecture: "amd64"            # /version 与镜像详情用 amd64；/info 自动映射为 x86_64
+
+# ncpu: 4                          # /info 的 NCPU、stats 的 online_cpus
+# mem_total: 8370600960            # 字节；/info 的 MemTotal、stats 的 memory limit
+# docker_root_dir: "/var/lib/docker"
+# cgroup_driver: "systemd"
+# cgroup_version: "2"
+# default_runtime: "runc"          # /info 的 DefaultRuntime 与 Runtimes 同步
+
+# storage_driver: "overlay2"       # /info 的 Driver
+# backing_filesystem: "extfs"      # /info 的 DriverStatus[Backing Filesystem]
+
+# 安全选项（/info 的 SecurityOptions；默认 apparmor + seccomp）
+# security_options:
+#   - "name=apparmor"
+#   - "name=seccomp,profile=builtin"
+
+# ============================================================
+# 三、预置诱饵容器 / 镜像 / 网络 / 卷
+# ============================================================
+# 预置诱饵容器（留空用内置默认 web/nginx + redis）。state 可填 running/exited/created，默认 running。
+# containers:
+#   - name: web
+#     image: nginx:latest
+#     state: running
+#   - name: redis
+#     image: redis:7
+#     state: running
+
+# 预置诱饵镜像（留空用内置默认 nginx:latest + redis:7）。tag 留空视为 latest。
+# images:
+#   - repo: nginx
+#     tag: latest
+#   - repo: redis
+#     tag: "7"
+
+# 自定义网络（bridge/host/none 是 Docker 自带的，始终存在）。
+# 留空默认建一个 potagent_default；driver 留空为 bridge。
+# networks:
+#   - name: "potagent_default"
+#     driver: "bridge"
+#     internal: false
+
+# 预置卷（留空默认 potagent-data / redis-data）。
+# volumes:
+#   - name: "potagent-data"
+#     driver: "local"
+#   - name: "redis-data"
+#     driver: "local"
+
+# ============================================================
+# 四、行为调节
+# ============================================================
+# 拉取/构建流的帧间隔毫秒数（模拟真实下载节奏：进度递进 + 网速波动）。
+# 留空=默认 250ms；设 0 则瞬时输出（调试用）。
+# pull_pace_ms: 250
+
+# 单个 TCP 连接的空闲超时秒数（期间无新请求即关闭），默认 300。
+# idle_timeout_sec: 300
+
+# ============================================================
+# 五、仍内置在代码里的"真实感数据"（一般不需要改，改需动 services/docker/docker.go）
+# ============================================================
+# - 镜像画像 imageProfiles：按 repo 取每类镜像的启动命令/Args/Env/暴露端口/
+#   已发布端口/进程数/top 进程列表（nginx/redis/mysql/mariadb/postgres/busybox/alpine，
+#   未知镜像走通用 Linux 容器兜底）。新增镜像类型需在 imageProfiles 里加条目。
+# - 镜像大小 imageSizes：nginx 187MB / redis 117MB / mysql 602MB / mariadb 401MB /
+#   postgres 432MB / alpine 7.3MB / busybox 4.26MB / python 132MB / node 1.1GB /
+#   ubuntu 78MB / debian 124MB / httpd 148MB / mongo 750MB；同类型 ±8% 抖动，
+#   未知镜像在 40MB~1.2GB 随机。
+# - 镜像层数 imageLayerCounts：nginx 7 / redis 3 / mysql 8 / mariadb 8 /
+#   postgres 12 / busybox 1 / alpine 1，未知镜像 2；层 ID 在登记时固化。
+# - 容器日志模板 containerLogs：nginx/redis/mysql(mariadb) 各自的启动日志，
+#   其它镜像回 "hello world"。
+# - 容器统计 containerStats：CPU 累计值、内存 usage、网络 rx/tx 等固定基线数值
+#   （CPU 核数与内存上限取上面的 ncpu/mem_total）。
+# - exec 输出 execOutput：id/whoami/pwd/uname/hostname/ls/ps 的返回内容。
+# - 容器随机名 randomName：Docker 风格 adjective_surname 词表。
+# - 种子时间抖动：镜像创建时间 72h+i*29h 前，容器创建时间 240min-i*95min 前，
+#   启动时间比创建晚 20~57s，网络/卷 3h 前——目的是让 Status/AGE 长短不一。
+# - 网络子网：bridge=172.17.0.0/16 起依次 172.18/172.19...，容器 IP 从 .2 顺序分配，
+#   停止时释放、启动时重新分配；MAC 由 IP 推导（02:42:xx:xx:xx:xx）。
+# - 构建缓存 ID、守护进程 ID、镜像层 ID 均在一次运行内稳定（重启会变）。
+# - /events 返回空 200；/swarm 固定 503 "This node is not a swarm manager"；
+#   单请求 body 上限 1MB。

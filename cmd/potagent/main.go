@@ -7,6 +7,7 @@ import (
 	"potAgent/logger"
 
 	_ "potAgent/services/dns"
+	_ "potAgent/services/docker"
 	_ "potAgent/services/elasticsearch"
 	_ "potAgent/services/ftp"
 	_ "potAgent/services/http"
