@@ -12,6 +12,7 @@ import (
 	_ "potAgent/services/ftp"
 	_ "potAgent/services/http"
 	_ "potAgent/services/iiot"
+	_ "potAgent/services/kubernetes"
 	_ "potAgent/services/ldap"
 	_ "potAgent/services/memcached"
 	_ "potAgent/services/mysql"

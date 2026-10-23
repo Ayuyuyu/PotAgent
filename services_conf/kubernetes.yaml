@@ -1,0 +1,88 @@
+protocol: "kubernetes"
+application: "kubernetes"
+enable: true
+host: "0.0.0.0"
+# Kubernetes API Server 默认必须 HTTPS，端口 6443（老明文 8080 已于 v1.24 移除）。
+port: 6443
+
+# ============================================================
+# 一、版本指纹（/version；留空取默认 v1.28.4 / go1.20.7 / linux/amd64）
+# ============================================================
+# version: "v1.28.4"                 # gitVersion；major/minor 自动从它推导
+# git_commit: "b7a3e7d1d4a3e8f9c0d1e2f3a4b5c6d7e8f9a0b"
+# go_version: "go1.20.7"
+# build_date: "2023-11-14T10:22:29Z"
+# platform: "linux/amd64"
+
+# ============================================================
+# 二、TLS 与连接
+# ============================================================
+# 证书：留空自动生成自签证书；也可指向 CA 签发的 cert/key 以更逼真。
+# cert_file: ""
+# key_file: ""
+# 单连接空闲超时秒数，默认 300。
+# idle_timeout_sec: 300
+
+# ============================================================
+# 三、预置诱饵数据（留空用内置默认）
+# ============================================================
+# 追加命名空间（default/kube-system/kube-public/kube-node-lease 始终存在）。
+# namespaces:
+#   - "monitoring"
+#   - "ingress-nginx"
+
+# 节点（留空默认 node-1 控制面，cpu=4 memory=8123456Ki）。
+# nodes:
+#   - name: "node-1"
+#     cpu: "4"
+#     memory: "8123456Ki"
+#     control_plane: true
+#   - name: "worker-1"
+#     cpu: "8"
+#     memory: "16Gi"
+#     control_plane: false
+
+# 预置 Pod（留空用内置默认：nginx/redis/coredns×2/etcd/apiserver/controller-manager/
+# scheduler/kube-proxy/broken-app）。phase 留空为 Running，image 留空为 nginx:latest。
+# pods:
+#   - name: "nginx-7d8f9c6b5-x2k4p"
+#     namespace: "default"
+#     image: "nginx:1.25.3"
+#     phase: "Running"
+
+# ============================================================
+# 四、仍内置在代码里的"真实感数据"（一般不需要改，改需动 services/kubernetes/kubernetes.go）
+# ============================================================
+# - 资源目录 resourceDefs：core v1（pods/services/namespaces/nodes/configmaps/secrets/
+#   serviceaccounts/endpoints/events/pv/pvc/resourcequotas/limitranges）、apps/v1
+#   （deployments/replicasets/statefulsets/daemonsets）、batch/v1（jobs/cronjobs）、
+#   networking.k8s.io/v1（ingresses/networkpolicies）、rbac、storage、policy、
+#   autoscaling、coordination、apiextensions 与 authorization/authentication 查询。
+#   discovery 的 verbs/shortNames/categories 与真机一致，子资源（pods/log、pods/exec、
+#   deployments/scale 等）也会出现在 APIResourceList 里。
+# - 内置工作负载种子：Deployment（nginx/redis/coredns）→ ReplicaSet → Pod 三层
+#   ownerReferences 自洽；对应 Service（kubernetes 10.96.0.1 / nginx / kube-dns）、
+#   Endpoints、ConfigMap（coredns Corefile、kube-root-ca.crt）、Secret
+#   （registry-credentials 的 dockerconfigjson、bootstrap-token）、Event（含一条
+#   Warning BackOff）、PV/PVC（pv-data/data-pvc）、StorageClass（standard）、
+#   DaemonSet（kube-proxy）、Ingress（app.example.com）、cluster-admin 角色绑定。
+# - 对象形状：node（capacity/allocatable/conditions/nodeInfo/daemonEndpoints）、
+#   pod（containerStatuses/conditions/qosClass/podIP/ownerReferences）、deployment
+#   （status 的 replicas/readyReplicas/availableReplicas/conditions）、service
+#   （clusterIP/clusterIPs/ports）、event（involvedObject）——describe 与 -o yaml
+#   都有完整内容。
+# - logs 内容：按镜像模板（nginx/redis/coredns/etcd/kube-*/broken-app）返回；
+#   metrics.k8s.io（kubectl top）返回固定的 482m/2194520Ki 与 8m/32768Ki。
+# - 行为：无认证（模拟暴露在公网的未授权 API Server），Authorization 头与 token
+#   原样落事件；authz 自查询一律 allowed；watch 先下发已有对象的 ADDED 事件再保持
+#   连接至 timeoutSeconds；exec/attach/portforward 不实现 SPDY（回 400
+#   "Upgrade request required"）；limit/continue 分页为 offset 编码。
+# - 服务端表格：kubectl 默认带 Accept: application/json;as=Table 请求，
+#   这里按真机返回 Table（pods/node/svc/deploy/rs/ds/cm/secret/event/pv/pvc/
+#   sc/ingress/job/cronjob/hpa/pdb 等标准列；-o wide 的列带 priority=1）。
+# - 已知限制：不提供 OpenAPI 文档（/openapi/v2 返回 404），因此 `kubectl apply`
+#   默认的 schema 校验会失败，请用 `kubectl apply --validate=false -f`；
+#   `kubectl create/delete/scale/rollout status` 不受影响。
+# - 指标：metrics.k8s.io/v1beta1 已注册，kubectl top 返回固定值
+#   （节点 482m/2194520Ki，容器 8m/32768Ki）。
+# - 节点心跳：kube-node-lease/node-1 的 Lease 已预置（describe node 可读）。

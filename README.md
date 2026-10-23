@@ -22,7 +22,8 @@ PotAgent 使用golang完成开发。PotAgent在好几年前就已经完成，现
 - [x] snmp
 - [x] ldap
 - [] rtsp
-- [] docker-api / kubernetes
+- [x] docker-api
+- [x] kubernetes
 - [x] smtp
 - [x] smtps
 - [x] sip
