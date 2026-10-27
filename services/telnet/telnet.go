@@ -19,10 +19,13 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"strings"
+
 	"potAgent/common"
 	"potAgent/event"
 	"potAgent/logger"
 	"potAgent/services"
+	"potAgent/services/cmdsim"
 
 	"github.com/rs/xid"
 )
@@ -48,8 +51,19 @@ type accounts struct {
 type telnetConfig struct {
 	Prompt    string            `mapstructure:"prompt" yaml:"prompt"`
 	MOTD      string            `mapstructure:"motd" yaml:"motd"`
+	Hostname  string            `mapstructure:"hostname" yaml:"hostname"`
 	Accounts  []accounts        `mapstructure:"accounts"`
 	Simulator map[string]string `mapstructure:"simulator"  yaml:"simulator"`
+	// CommandSim 是否启用内置命令模拟（whoami/ls/cd/cat…），不配则默认启用。
+	// 配了 simulator 的整行命令仍然优先。
+	CommandSim *bool `mapstructure:"command_sim" yaml:"command_sim"`
+	// System 内置命令里显示的伪造系统版本（uname/os-release 等），留空用内置默认
+	System cmdsim.SystemInfo `mapstructure:"system" yaml:"system"`
+}
+
+// commandSimEnabled 内置命令模拟的开关判定。
+func (c telnetConfig) commandSimEnabled() bool {
+	return c.CommandSim == nil || *c.CommandSim
 }
 
 func telnetHandle(ctx context.Context, service *services.Service) {
@@ -61,10 +75,14 @@ func telnetHandle(ctx context.Context, service *services.Service) {
 	network := "tcp4"
 	listen, err := net.Listen(network, address)
 	if err != nil {
-		logger.Log.Fatalln(err)
+		logger.Log.Errorln(err)
+		service.ReportError(err)
+		return
 	}
 	defer listen.Close()
-	logger.Log.Info(baseOptions.Application, " listen on ", address)
+	logger.Log.Infof("%s listen on %s", baseOptions.Application, address)
+
+	service.MarkReady()
 
 	connChan := common.ForwardListenerToChan(listen)
 
@@ -112,6 +130,8 @@ func handleServiceConn(conn *net.Conn, service *services.Service) {
 
 	// 认证，最多尝试 4 次
 	authenticated := false
+	loginUser := ""
+
 	for i := 0; i < 4; i++ {
 		term.SetPrompt("Username: ")
 		username, err := term.ReadLine()
@@ -142,6 +162,7 @@ func handleServiceConn(conn *net.Conn, service *services.Service) {
 		for _, account := range cfg.Accounts {
 			if username == account.Username && password == account.Password {
 				authenticated = true
+				loginUser = username
 				break
 			}
 		}
@@ -155,9 +176,29 @@ func handleServiceConn(conn *net.Conn, service *services.Service) {
 		return
 	}
 
+	// 命令模拟会话：cwd/历史按连接保持
+	var sim *cmdsim.Session
+	if cfg.commandSimEnabled() {
+		user := loginUser
+		if user == "" {
+			user = "root"
+		}
+
+		sim = cmdsim.New(cmdsim.Config{
+			User:     user,
+			Hostname: cfg.Hostname,
+			System:   cfg.System,
+		})
+	}
+
+	prompt := cfg.Prompt
+	if prompt == "" && sim != nil {
+		prompt = sim.Prompt()
+	}
+
 	// 发送欢迎消息
-	term.SetPrompt(cfg.Prompt)
-	term.Write([]byte(buildTelnetResponse(cfg.MOTD + "\n")))
+	term.SetPrompt(prompt)
+	term.Write([]byte(buildTelnetResponse(cfg.MOTD)))
 
 	for {
 		// 读取客户端发送的命令
@@ -188,12 +229,40 @@ func handleServiceConn(conn *net.Conn, service *services.Service) {
 			break
 		}
 
+		if sim != nil {
+			res := sim.Run(cmd)
+			if res.Output != "" {
+				term.Write([]byte(buildTelnetResponse(res.Output)))
+			}
+
+			if res.Exit {
+				break
+			}
+
+			term.SetPrompt(promptFor(sim, cfg.Prompt))
+
+			continue
+		}
+
 		// 回显命令给客户端
 		term.Write([]byte(buildTelnetResponse("command not found")))
 	}
 	term.Write([]byte(buildTelnetResponse("Goodbye!\r\n")))
 }
 
+// promptFor 优先用配置的固定提示符，否则跟随模拟会话的 cwd。
+func promptFor(sim *cmdsim.Session, fixed string) string {
+	if fixed != "" {
+		return fixed
+	}
+
+	return sim.Prompt()
+}
+
+// buildTelnetResponse 统一行尾：Terminal.Write 会把 \n 转成 \r\n，
+// 所以这里只保证"以单个 \n 结尾"，避免出现 \r\r\n。
 func buildTelnetResponse(s string) string {
-	return s + "\r\n"
+	s = strings.ReplaceAll(s, "\r\n", "\n")
+
+	return strings.TrimSuffix(s, "\n") + "\n"
 }

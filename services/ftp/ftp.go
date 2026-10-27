@@ -104,10 +104,14 @@ func ftpHandle(ctx context.Context, service *services.Service) {
 	address := fmt.Sprintf("%v:%v", base.Host, base.Port)
 	listen, err := net.Listen("tcp4", address)
 	if err != nil {
-		logger.Log.Fatalln(err)
+		logger.Log.Errorln(err)
+		service.ReportError(err)
+		return
 	}
 	defer listen.Close()
 	logger.Log.Infof("%s listen on %s (mode=%s)", base.Application, address, modeName(cfg.Mode))
+
+	service.MarkReady()
 
 	connChan := common.ForwardListenerToChan(listen)
 	for {

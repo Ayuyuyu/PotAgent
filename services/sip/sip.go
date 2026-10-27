@@ -223,14 +223,20 @@ func sipHandle(ctx context.Context, service *services.Service) {
 	address := fmt.Sprintf("%v:%v", baseOptions.Host, baseOptions.Port)
 	udpAddr, err := net.ResolveUDPAddr("udp4", address)
 	if err != nil {
-		logger.Log.Fatalln(err)
+		logger.Log.Errorln(err)
+		service.ReportError(err)
+		return
 	}
 	conn, err := net.ListenUDP("udp4", udpAddr)
 	if err != nil {
-		logger.Log.Fatalln(err)
+		logger.Log.Errorln(err)
+		service.ReportError(err)
+		return
 	}
 	defer conn.Close()
-	logger.Log.Info(baseOptions.Application, " listen on ", address)
+	logger.Log.Infof("%s listen on %s", baseOptions.Application, address)
+
+	service.MarkReady()
 
 	packetChan := common.ForwardUDPPacketToChan(conn)
 	for {

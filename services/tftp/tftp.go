@@ -111,11 +111,14 @@ func tftpHandle(ctx context.Context, service *services.Service) {
 	address := fmt.Sprintf("%v:%v", service.BaseOptions.Host, service.BaseOptions.Port)
 	conn, err := net.ListenUDP("udp4", &net.UDPAddr{IP: net.ParseIP(service.BaseOptions.Host), Port: int(service.BaseOptions.Port)})
 	if err != nil {
-		logger.Log.Fatalln(err)
+		logger.Log.Errorln(err)
+		service.ReportError(err)
 		return
 	}
 	defer conn.Close()
-	logger.Log.Infoln(service.BaseOptions.Application, "listen on", address)
+	logger.Log.Infof("%s listen on %s", service.BaseOptions.Application, address)
+
+	service.MarkReady()
 
 	// 单读者内联处理：WRQ 会话需要就地读取 DATA 流，若与主循环并发读同一 socket
 	// 会出现数据包串台，故不使用 ForwardUDPPacketToChan，自行 ReadFromUDP 并按

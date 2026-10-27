@@ -60,10 +60,14 @@ func dnsHandle(ctx context.Context, service *services.Service) {
 	address := fmt.Sprintf("%v:%v", baseOptions.Host, baseOptions.Port)
 	conn, err := net.ListenUDP("udp4", &net.UDPAddr{IP: net.ParseIP(baseOptions.Host), Port: int(baseOptions.Port)})
 	if err != nil {
-		logger.Log.Fatalln(err)
+		logger.Log.Errorln(err)
+		service.ReportError(err)
+		return
 	}
 	defer conn.Close()
-	logger.Log.Infoln(baseOptions.Application, "listen on ", address)
+	logger.Log.Infof("%s listen on %s", baseOptions.Application, address)
+
+	service.MarkReady()
 
 	// 读包 goroutine，在通道上喂包
 	packetChan := common.ForwardUDPPacketToChan(conn)

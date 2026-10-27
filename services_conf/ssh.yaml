@@ -7,8 +7,24 @@ host: "0.0.0.0"
 port: 2222
 
 # ssh config
+# 主机名：用于提示符 root@<hostname>:~$ 与 hostname/uname 输出
+hostname: "ubuntu"
+
+# 伪造的系统信息：只影响 uname / /etc/os-release / /proc/version 等命令输出，
+# 留空的字段使用内置默认值（Ubuntu 22.04.3 / 5.15.0-91-generic / x86_64）
+system:
+  distro: "Ubuntu"
+  version: "22.04.3 LTS"
+  version_id: "22.04"
+  codename: "Jammy Jellyfish"
+  codename_id: "jammy"
+  kernel: "5.15.0-91-generic"
+  kernel_version: "#101-Ubuntu SMP Tue Nov 14 13:30:08 UTC 2023"
+  machine: "x86_64"
+
+# 版本信息需要同步进行配置
 motd: |
-  Welcome to Ubuntu 22.04.03 LTS (Jammy Jellyfish)
+  Welcome to Ubuntu 22.04.3 LTS (Jammy Jellyfish)
 
   * Documentation:  https://help.ubuntu.com
   * Management:     https://landscape.canonical.com
@@ -30,8 +46,7 @@ accounts:
     password: "root"
     
 simulator:
-  pwd: /home/user
-  ls:  Documents  Downloads  Music  Pictures  Videos
+  # pwd/ls/cd/cat 等已由内置命令模拟提供（会跟随 cd 变化），这里只保留自定义输出
   ps -ef: |
     UID        PID  PPID  C STIME TTY          TIME CMD
     user      1234     1  0 10:00 ?        00:00:00 /usr/lib/systemd/systemd

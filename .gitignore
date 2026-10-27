@@ -2,3 +2,11 @@ services_conf/assets/
 *.log
 PotAgent
 .code*
+
+# 管理台统计库（SQLite + WAL 副本）
+*.db
+*.db-shm
+*.db-wal
+
+# 单实例锁（运行期生成，内容为 pid）
+potagent.lock

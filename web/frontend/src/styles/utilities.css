@@ -1,0 +1,180 @@
+/* 少量跨页面复用的表现型类，不承载业务样式 */
+
+/* 等宽数字：统计数字与端口不跳动 */
+.mono-num {
+  font-family: 'JetBrains Mono', 'SF Mono', ui-monospace, Menlo, Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+/* 列表左侧语义竖条 */
+.edge-bar {
+  position: relative;
+}
+
+.edge-bar::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background-color: rgb(var(--edge-color, var(--c-border)));
+  transition: background-color var(--duration-fast) var(--ease-out);
+}
+
+.edge-bar--primary {
+  --edge-color: var(--c-primary);
+}
+
+.edge-bar--accent {
+  --edge-color: var(--c-accent);
+}
+
+.edge-bar--success {
+  --edge-color: var(--c-success);
+}
+
+.edge-bar--danger {
+  --edge-color: var(--c-danger);
+}
+
+.edge-bar--muted {
+  --edge-color: var(--c-border-strong);
+}
+
+/* 登录页 / 空态的细网格底 */
+.grid-backdrop {
+  background-image:
+    linear-gradient(rgb(var(--c-border) / 0.55) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(var(--c-border) / 0.55) 1px, transparent 1px);
+  background-size: var(--grid-cell) var(--grid-cell);
+  background-position: -1px -1px;
+}
+
+/* 顶栏底部渐变分隔，替代厚重阴影 */
+.hairline-bottom {
+  box-shadow: 0 1px 0 rgb(var(--c-border));
+}
+
+/* 顶栏投影：Tailwind arbitrary value 里 var() 与斜杠透明度会冲突，故用独立类 */
+.topnav-elevation {
+  box-shadow: 0 2px 8px rgb(var(--c-shadow) / 0.07);
+}
+
+/* 卡片悬停轻微上浮，克制但有反馈 */
+.lift-on-hover {
+  transition:
+    transform var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out),
+    border-color var(--duration-fast) var(--ease-out);
+}
+
+.lift-on-hover:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgb(var(--c-shadow) / 0.08);
+  border-color: rgb(var(--c-border-strong));
+}
+
+/* 状态点呼吸动画（仅运行中状态启用） */
+.status-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background-color: currentColor;
+}
+
+.status-dot--live {
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.45;
+    transform: scale(0.82);
+  }
+}
+
+/* YAML 关键字着色层与输入层严格对齐 */
+.editor-layer {
+  tab-size: 2;
+  white-space: pre;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+/*
+ * YAML 编辑器三档外观（与站点双主题正交，可自由组合）。
+ * 默认档为「纸灰」：底色比白色页头略深，编辑区边界清晰。
+ */
+.editor-surface {
+  --editor-bg: 247 248 250;
+  --editor-gutter-bg: 238 241 245;
+  --editor-gutter-text: 148 163 184;
+  --editor-border: 219 224 231;
+  --editor-text: 31 41 55;
+  --editor-caret: 37 99 235;
+  --editor-selection: 37 99 235;
+  --yaml-key: var(--c-primary);
+  --yaml-string: var(--c-success);
+  --yaml-number: var(--c-accent);
+  --yaml-literal: var(--c-info);
+  --yaml-comment: var(--c-text-subtle);
+  --yaml-punct: var(--c-text-muted);
+}
+
+.editor-surface[data-editor-theme='light'] {
+  --editor-bg: 255 255 255;
+  --editor-gutter-bg: 250 251 252;
+  --editor-gutter-text: 156 163 175;
+  --editor-border: 229 231 235;
+}
+
+.editor-surface[data-editor-theme='dark'] {
+  --editor-bg: 30 36 48;
+  --editor-gutter-bg: 24 29 39;
+  --editor-gutter-text: 120 132 154;
+  --editor-border: 52 62 80;
+  --editor-text: 226 232 240;
+  --editor-caret: 125 180 255;
+  --editor-selection: 125 180 255;
+  --yaml-key: 125 180 255;
+  --yaml-string: 134 239 172;
+  --yaml-number: 252 211 77;
+  --yaml-literal: 196 181 253;
+  --yaml-comment: 129 141 163;
+  --yaml-punct: 148 163 184;
+}
+
+/* 高亮配色由 v-html 注入，故放在全局而非 scoped 样式里 */
+.yaml-key {
+  color: rgb(var(--yaml-key, var(--c-primary)));
+  font-weight: 500;
+}
+
+.yaml-string {
+  color: rgb(var(--yaml-string, var(--c-success)));
+}
+
+.yaml-number {
+  color: rgb(var(--yaml-number, var(--c-accent)));
+}
+
+.yaml-literal {
+  color: rgb(var(--yaml-literal, var(--c-info)));
+}
+
+.yaml-comment {
+  color: rgb(var(--yaml-comment, var(--c-text-subtle)));
+  font-style: italic;
+}
+
+.yaml-punct {
+  color: rgb(var(--yaml-punct, var(--c-text-muted)));
+}

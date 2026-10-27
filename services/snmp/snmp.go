@@ -69,11 +69,14 @@ func snmpHandle(ctx context.Context, service *services.Service) {
 	address := fmt.Sprintf("%v:%v", service.BaseOptions.Host, service.BaseOptions.Port)
 	conn, err := net.ListenUDP("udp4", &net.UDPAddr{IP: net.ParseIP(service.BaseOptions.Host), Port: int(service.BaseOptions.Port)})
 	if err != nil {
-		logger.Log.Fatalln(err)
+		logger.Log.Errorln(err)
+		service.ReportError(err)
 		return
 	}
 	defer conn.Close()
-	logger.Log.Infoln(service.BaseOptions.Application, "listen on", address)
+	logger.Log.Infof("%s listen on %s", service.BaseOptions.Application, address)
+
+	service.MarkReady()
 
 	packetChan := common.ForwardUDPPacketToChan(conn)
 	for {

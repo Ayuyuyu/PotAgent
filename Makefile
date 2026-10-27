@@ -10,8 +10,29 @@ NAME=PotAgent
 # 待 gofmt 检查的所有 .go 文件
 GO_FILES := $(shell find . -name '*.go' -not -path './.git/*')
 
+# 管理台前端目录与嵌入位置
+WEB_DIR := web/frontend
+WEB_DIST := web/server/dist
+
 # 默认目标
-all: debug
+all: web debug
+
+# 构建管理台前端并复制到 web/server/dist（之后重新编译二进制即可嵌入）
+web:
+	cd $(WEB_DIR) && npm run build
+	rm -rf $(WEB_DIST)
+	mkdir -p $(WEB_DIST)
+	cp -r $(WEB_DIR)/dist/. $(WEB_DIST)/
+	@touch $(WEB_DIST)/.gitkeep
+	@echo "前端已构建到 $(WEB_DIST)，接着执行 make release 或 make debug"
+
+# 只装前端依赖（首次或 package.json 变更后）
+web-deps:
+	cd $(WEB_DIR) && npm install --no-audit --no-fund
+
+# 开发态前端（Vite dev server，/api 代理到 127.0.0.1:58090）
+web-dev:
+	cd $(WEB_DIR) && npm run dev
 
 
 debug:
@@ -57,4 +78,4 @@ gofmt-check:
 check: gofmt-check vet test
 
 
-.PHONY: all debug release clean fmt vet test gofmt-check check
+.PHONY: all debug release clean fmt vet test gofmt-check check web web-deps web-dev

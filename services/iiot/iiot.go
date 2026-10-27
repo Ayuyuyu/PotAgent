@@ -389,16 +389,22 @@ func iiotHandle(ctx context.Context, service *services.Service) {
 	// 可选 TLS：目前只有 MQTT 用（IIoT 场景里 MQTT over TLS 很常见）
 	tlsConf, err := loadTLSConfig(&cfg, base.Protocol == "mqtts", base.Application)
 	if err != nil {
-		logger.Log.Fatalln(err)
+		logger.Log.Errorln(err)
+		service.ReportError(err)
+		return
 	}
 
 	address := fmt.Sprintf("%v:%v", base.Host, base.Port)
 	listen, err := net.Listen("tcp4", address)
 	if err != nil {
-		logger.Log.Fatalln(err)
+		logger.Log.Errorln(err)
+		service.ReportError(err)
+		return
 	}
 	defer listen.Close()
-	logger.Log.Infoln(base.Application, "listen on ", address)
+	logger.Log.Infof("%s listen on %s", base.Application, address)
+
+	service.MarkReady()
 
 	connChan := common.ForwardListenerToChan(listen)
 	for {

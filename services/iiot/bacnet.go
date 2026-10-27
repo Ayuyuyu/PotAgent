@@ -67,10 +67,14 @@ func handleBacnet(ctx context.Context, service *services.Service, cfg *iiotConfi
 	address := fmt.Sprintf("%v:%v", base.Host, base.Port)
 	conn, err := net.ListenUDP("udp4", &net.UDPAddr{IP: net.ParseIP(base.Host), Port: int(base.Port)})
 	if err != nil {
-		logger.Log.Fatalln(err)
+		logger.Log.Errorln(err)
+		service.ReportError(err)
+		return
 	}
 	defer conn.Close()
-	logger.Log.Infoln(base.Application, "listen on ", address)
+	logger.Log.Infof("%s listen on %s", base.Application, address)
+
+	service.MarkReady()
 
 	packetChan := common.ForwardUDPPacketToChan(conn)
 	for {

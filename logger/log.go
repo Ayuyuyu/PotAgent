@@ -48,23 +48,25 @@ func SetDefault(logPath string, logLevel string) {
 		level = log_level
 	}
 	Log.SetLevel(level)
-	//debug模式
+
+	// 调用位置只在 debug 下打印，避免 info 级别日志过于嘈杂
 	if level == logrus.DebugLevel {
 		Log.SetReportCaller(true)
-		// 日志格式
-		Log.SetFormatter(&logrus.TextFormatter{
-			FullTimestamp:   true,
-			TimestampFormat: time.DateTime,
-			ForceColors:     true,
-			ForceQuote:      true,
-			CallerPrettyfier: func(frame *runtime.Frame) (function string, file string) {
-				//仅需基本函数名+文件名与行号
-				fileName := path.Base(frame.File)
-				function_new := frame.Function[strings.LastIndex(frame.Function, "/")+1:]
-				return function_new, fmt.Sprintf("%s:%d", fileName, frame.Line)
-			},
-		})
 	}
+
+	// 日志格式：任何级别都带完整时间戳。
+	// 默认 TextFormatter 在终端下只显示 INFO[0000]（进程启动秒数），没有墙上时间，排查问题无法对时。
+	Log.SetFormatter(&logrus.TextFormatter{
+		FullTimestamp:   true,
+		TimestampFormat: time.DateTime,
+		// 不强制颜色：终端下 logrus 会自动上色，重定向到文件时保持纯文本，避免混入 ANSI 转义码
+		CallerPrettyfier: func(frame *runtime.Frame) (function string, file string) {
+			//仅需基本函数名+文件名与行号
+			fileName := path.Base(frame.File)
+			function_new := frame.Function[strings.LastIndex(frame.Function, "/")+1:]
+			return function_new, fmt.Sprintf("%s:%d", fileName, frame.Line)
+		},
+	})
 
 	//日志存储
 	if len(logPath) > 0 {

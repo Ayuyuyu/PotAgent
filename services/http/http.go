@@ -95,10 +95,14 @@ func httpHandle(ctx context.Context, service *services.Service) {
 	network := "tcp4"
 	listen, err := net.Listen(network, address)
 	if err != nil {
-		logger.Log.Fatalln(err)
+		logger.Log.Errorln(err)
+		service.ReportError(err)
+		return
 	}
 	defer listen.Close()
-	logger.Log.Infoln(baseOptions.Application, "listen on ", address)
+	logger.Log.Infof("%s listen on %s", baseOptions.Application, address)
+
+	service.MarkReady()
 	connChan := common.ForwardListenerToChan(listen)
 	for {
 		select {

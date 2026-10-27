@@ -16,3 +16,21 @@ outputs:
     host: "127.0.0.1"
     port: 9092
     topic: "test"
+
+# 管理台（web 控制台）
+# 编译进主进程，但使用独立端口与独立路由，代码在 web/server。
+# 前端构建产物嵌入二进制（make web 会自动构建），开发时可用 cd web/frontend && npm run dev。
+web:
+  enable: true
+  # 监听所有网卡（远程访问）。改为 "127.0.0.1" 则只允许本机访问。
+  # 注意：暴露到网络前务必把下面的 password 换成强口令（或 bcrypt 哈希）。
+  host: "0.0.0.0"
+  port: 58090
+  username: "admin"
+  # 口令支持明文；也可写成 bcrypt:<hash>
+  # 生成：htpasswd -bnBC 10 "" '你的口令' | tr -d ':\n'
+  password: "potagent"
+  # 统计库（按小时聚合，用于概览与趋势图），相对当前工作目录
+  stats_db_path: "./potagent_stats.db"
+  # 登录会话有效期（分钟）
+  session_ttl_minutes: 480

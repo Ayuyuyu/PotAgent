@@ -1,0 +1,19 @@
+/* 主题无关的尺寸、层级、动效变量 */
+:root {
+  --topnav-height: 48px;
+  --radius-card: 4px;
+  --radius-pill: 999px;
+
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --duration-fast: 140ms;
+  --duration-base: 200ms;
+
+  --z-topnav: 40;
+  --z-dropdown: 60;
+  --z-drawer: 70;
+  --z-modal: 80;
+  --z-toast: 90;
+
+  --grid-cell: 22px;
+}

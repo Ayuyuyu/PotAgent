@@ -1,7 +1,7 @@
 protocol: "bacnet" #固定字段
 application: "bacnet-ip"
 # 47808 是 BACnet/IP 标准端口
-enable: true
+enable: false
 # 监听地址（BACnet/IP 走 UDP）
 host: "0.0.0.0"
 # 监听端口（BACnet/IP 标准端口 47808）

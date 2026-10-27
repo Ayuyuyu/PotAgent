@@ -33,6 +33,7 @@ import (
 	"potAgent/event"
 	"potAgent/logger"
 	"potAgent/services"
+	"potAgent/services/cmdsim"
 	"potAgent/services/decoder"
 	"strings"
 
@@ -73,6 +74,16 @@ type sshConfig struct {
 	Accounts        []accounts        `mapstructure:"accounts"`
 	MaxAuthTries    int               `mapstructure:"max_auth_tries"`
 	Simulator       map[string]string `mapstructure:"simulator"  yaml:"simulator"`
+	// CommandSim 是否启用内置命令模拟（whoami/ls/cd/cat…），不配则默认启用。
+	// 配了 simulator 的整行命令仍然优先。
+	CommandSim *bool `mapstructure:"command_sim" yaml:"command_sim"`
+	// System 内置命令里显示的伪造系统版本（uname/os-release 等），留空用内置默认
+	System cmdsim.SystemInfo `mapstructure:"system" yaml:"system"`
+}
+
+// commandSimEnabled 内置命令模拟的开关判定。
+func (c sshConfig) commandSimEnabled() bool {
+	return c.CommandSim == nil || *c.CommandSim
 }
 
 func sshHandle(ctx context.Context, service *services.Service) {
@@ -94,10 +105,14 @@ func sshHandle(ctx context.Context, service *services.Service) {
 	network := "tcp4"
 	listen, err := net.Listen(network, address)
 	if err != nil {
-		logger.Log.Fatalln(err)
+		logger.Log.Errorln(err)
+		service.ReportError(err)
+		return
 	}
 	defer listen.Close()
-	logger.Log.Infoln(baseOptions.Application, " listen on ", address)
+	logger.Log.Infof("%s listen on %s", baseOptions.Application, address)
+
+	service.MarkReady()
 
 	connChan := common.ForwardListenerToChan(listen)
 
@@ -212,6 +227,17 @@ func handleServiceConn(conn net.Conn, config *ssh.ServerConfig, sessionID xid.ID
 	}
 
 	go ssh.DiscardRequests(reqs)
+
+	// 每条连接一个命令模拟会话：cwd、历史在同连接的多个 channel 间共享；
+	// command_sim: false 时退回"只记事件 + command not found"的旧行为。
+	var sim *cmdsim.Session
+	if cfg.commandSimEnabled() {
+		sim = cmdsim.New(cmdsim.Config{
+			User:     sdata.metadata[sessionID.String()],
+			Hostname: cfg.Hostname,
+			System:   cfg.System,
+		})
+	}
 
 	for newChannel := range chans {
 		// 连接ssh成功之后，建立的channel，处理收到的请求
@@ -329,9 +355,21 @@ func handleServiceConn(conn net.Conn, config *ssh.ServerConfig, sessionID xid.ID
 					decoder := PayloadDecoder(req.Payload)
 					e.Details["ssh.subsystem"] = decoder.String()
 					event.EventPush(e)
-				default:
-					logger.Log.Errorf("Unsupported request type=%s payload=%s", req.Type, string(req.Payload))
+				case "x11-req":
+					// X11 转发（MobaXterm 默认会请求）：蜜罐不实现，明确回失败让客户端回退。
+					// 以前落到 default 分支只打错误、且不回复，客户端会一直等应答。
 					event.EventPush(e)
+					if req.WantReply {
+						_ = req.Reply(false, nil)
+					}
+				default:
+					// 未识别的请求：WantReply 时必须回复，否则客户端阻塞等待；
+					// 这类请求很常见（keepalive、agent 转发等），降到 debug 避免刷错误日志。
+					logger.Log.Debugf("忽略未支持的请求 type=%s payload=%s", req.Type, string(req.Payload))
+					event.EventPush(e)
+					if req.WantReply {
+						_ = req.Reply(false, nil)
+					}
 				}
 
 				if needResponse {
@@ -351,12 +389,16 @@ func handleServiceConn(conn net.Conn, config *ssh.ServerConfig, sessionID xid.ID
 						//取出存储的username
 						username := sdata.metadata[sessionID.String()]
 						prompt := fmt.Sprintf("%v@%v:~$ ", username, cfg.Hostname)
+						if sim != nil {
+							prompt = sim.Prompt()
+						}
 
 						term := term.NewTerminal(wrappedChannel, prompt)
-						// 模拟的登录时间：当前时间往前推一天
-						motd := []byte(fmt.Sprintf("Last login: %s from 172.31.60.24\n", time.Now().AddDate(0, 0, -1).Format("Mon Jan 2 15:04:05 2006")))
-						if len(cfg.Motd) > 0 {
-							motd = []byte(cfg.Motd)
+						// motd 配了就原样输出；没配才用内置的 Last login 行（时间取当前时间前一天）
+						motd := cfg.Motd
+						if strings.TrimSpace(motd) == "" {
+							motd = fmt.Sprintf("Last login: %s from 172.31.60.24\n",
+								time.Now().AddDate(0, 0, -1).Format("Mon Jan 2 15:04:05 2006"))
 						}
 						term.Write([]byte(motd))
 
@@ -384,6 +426,7 @@ func handleServiceConn(conn net.Conn, config *ssh.ServerConfig, sessionID xid.ID
 								"ssh.shell":     line,
 							}))
 
+							// yaml 里配置的整行命令优先
 							if v, ok := cfg.Simulator[line]; ok {
 								// 模拟器回复保证以换行结尾（yaml 里 | 块标量已带 \n，避免重复）
 								if !strings.HasSuffix(v, "\n") {
@@ -392,12 +435,41 @@ func handleServiceConn(conn net.Conn, config *ssh.ServerConfig, sessionID xid.ID
 								term.Write([]byte(v))
 								continue
 							}
-							term.Write([]byte(fmt.Sprintf("-bash: %v: command not found\n", GetFirstCommandLineArgument(line))))
+
+							if sim == nil {
+								term.Write([]byte(fmt.Sprintf("-bash: %v: command not found\n", GetFirstCommandLineArgument(line))))
+								continue
+							}
+
+							res := sim.Run(line)
+							if res.Output != "" {
+								term.Write([]byte(res.Output))
+							}
+
+							if res.Exit {
+								channel.SendRequest("exit-status", false, []byte{0, 0, 0, 0})
+								return
+							}
+
+							// cd 等命令会改变提示符里的目录
+							if res.Output == "" {
+								term.SetPrompt(sim.Prompt())
+							}
 						}
 					} else if req.Type == "exec" {
 						defer channel.Close()
-						channel.Write([]byte(fmt.Sprintf("-bash: %v: command not found\n", payloads[0])))
-						channel.SendRequest("exit-status", false, []byte{0, 0, 0, 0})
+
+						res := cmdsim.Result{Output: fmt.Sprintf("-bash: %v: command not found\n", payloads[0]), ExitCode: 127}
+						if sim != nil {
+							res = sim.Run(payloads[0])
+						}
+
+						if res.Output != "" {
+							channel.Write([]byte(res.Output))
+						}
+						channel.SendRequest("exit-status", false, []byte{
+							byte(res.ExitCode >> 24), byte(res.ExitCode >> 16), byte(res.ExitCode >> 8), byte(res.ExitCode),
+						})
 
 						event.EventPush(event.NewEvent(serviceName, "ssh-exec", srcAddr, dstAddr, map[string]interface{}{
 							"protocol":      serviceName,

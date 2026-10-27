@@ -1,0 +1,77 @@
+/*
+ * 双主题：仅替换颜色变量，尺寸与结构完全一致。
+ * 变量用 R G B 三元组，便于 Tailwind 生成带透明度的颜色。
+ */
+
+/* 方案 A：精工蓝 —— 最贴近参考截图的紧凑控制台 */
+:root,
+[data-theme='console-blue'] {
+  --c-canvas: 245 246 248;
+  --c-canvas-tint: 236 239 244;
+  --c-surface: 255 255 255;
+  --c-surface-alt: 250 251 252;
+  --c-surface-hover: 246 248 251;
+
+  --c-border: 229 231 235;
+  --c-border-strong: 209 213 219;
+
+  --c-text: 31 41 55;
+  --c-text-muted: 107 114 128;
+  --c-text-subtle: 156 163 175;
+
+  --c-primary: 37 99 235;
+  --c-primary-hover: 29 78 216;
+  --c-primary-soft: 239 246 255;
+  --c-primary-ink: 29 78 216;
+
+  --c-accent: 245 158 11;
+  --c-accent-soft: 255 247 230;
+
+  --c-success: 22 163 74;
+  --c-success-soft: 240 253 244;
+  --c-warning: 217 119 6;
+  --c-warning-soft: 255 251 235;
+  --c-danger: 220 38 38;
+  --c-danger-soft: 254 242 242;
+  --c-info: 14 165 233;
+  --c-info-soft: 240 249 255;
+
+  --c-mark: 253 230 138;
+  --c-shadow: 15 23 42;
+}
+
+/* 方案 B：翡翠绿 —— 参考站 emerald 主题的冷绿变体 */
+[data-theme='emerald'] {
+  --c-canvas: 244 247 246;
+  --c-canvas-tint: 232 240 237;
+  --c-surface: 255 255 255;
+  --c-surface-alt: 249 251 250;
+  --c-surface-hover: 242 248 246;
+
+  --c-border: 222 231 228;
+  --c-border-strong: 197 214 208;
+
+  --c-text: 20 32 31;
+  --c-text-muted: 92 110 107;
+  --c-text-subtle: 146 163 159;
+
+  --c-primary: 15 118 110;
+  --c-primary-hover: 13 100 94;
+  --c-primary-soft: 230 249 245;
+  --c-primary-ink: 13 100 94;
+
+  --c-accent: 20 184 166;
+  --c-accent-soft: 237 252 249;
+
+  --c-success: 16 150 92;
+  --c-success-soft: 236 253 243;
+  --c-warning: 197 118 10;
+  --c-warning-soft: 254 250 236;
+  --c-danger: 205 47 47;
+  --c-danger-soft: 254 242 242;
+  --c-info: 13 148 168;
+  --c-info-soft: 236 250 252;
+
+  --c-mark: 167 243 208;
+  --c-shadow: 12 32 30;
+}

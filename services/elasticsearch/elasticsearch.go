@@ -441,10 +441,14 @@ func elasticsearchHandle(ctx context.Context, service *services.Service) {
 	address := fmt.Sprintf("%v:%v", baseOptions.Host, baseOptions.Port)
 	listen, err := net.Listen("tcp4", address)
 	if err != nil {
-		logger.Log.Fatalln(err)
+		logger.Log.Errorln(err)
+		service.ReportError(err)
+		return
 	}
 	defer listen.Close()
-	logger.Log.Info(baseOptions.Application, " listen on ", address)
+	logger.Log.Infof("%s listen on %s", baseOptions.Application, address)
+
+	service.MarkReady()
 
 	connChan := common.ForwardListenerToChan(listen)
 	for {

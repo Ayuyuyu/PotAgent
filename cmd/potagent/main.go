@@ -40,9 +40,10 @@ var (
 
 var cliFlags = []cli.Flag{
 	&cli.StringFlag{
-		Name:  "config, c",
-		Value: "pot.yaml",
-		Usage: "Load configuration from `FILE`",
+		Name:    "config",
+		Aliases: []string{"c"},
+		Value:   "pot.yaml",
+		Usage:   "Load configuration from `FILE`",
 	},
 	&cli.StringFlag{
 		Name:  "data, d",
